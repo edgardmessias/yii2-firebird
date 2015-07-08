@@ -1,0 +1,32 @@
+{
+    "name": "edgardmessias/yii2-firebird",
+    "description": "Firebird connector for Yii2 framework",
+    "keywords": ["yii2", "firebird", "active-record"],
+    "type": "yii2-extension",
+    "license": "BSD-3-Clause",
+    "support": {
+        "issues": "https://github.com/edgardmessias/yii2-firebird/issues",
+        "forum": "http://www.yiiframework.com/forum/",
+        "wiki": "http://www.yiiframework.com/wiki/",
+        "irc": "irc://irc.freenode.net/yii",
+        "source": "https://github.com/edgardmessias/yii2-firebird"
+    },
+    "authors": [
+        {
+            "name": "Edgard Lorraine Messias",
+            "email": "edgardmessias@gmail.com"
+        }
+    ],
+    "require": {
+        "yiisoft/yii2": ">=2.0.4",
+        "ext-pdo": "*",
+        "ext-pdo_firebird": "*"
+    },
+    "require-dev": {
+        "yiisoft/yii2-dev": ">=2.0.4",
+        "phpunit/phpunit": "~4.5"
+    },
+    "autoload": {
+        "psr-4": { "edgardmessias\\db\\firebird\\": "" }
+    }
+}

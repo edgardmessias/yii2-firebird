@@ -1,0 +1,11 @@
+#!/usr/bin/expect
+
+spawn sudo dpkg-reconfigure firebird2.1-super -freadline
+expect "Enable Firebird server?"
+send "Y\r"
+
+expect "Password for SYSDBA:"
+send "masterkey\r"
+
+# done
+expect eof
