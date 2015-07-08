@@ -19,13 +19,13 @@ The preferred way to install this extension is through [composer](http://getcomp
 Either run
 
 ```
-php composer.phar require --prefer-dist yiisoft/yii2-firebird
+php composer.phar require --prefer-dist edgardmessias/yii2-firebird
 ```
 
 or add
 
 ```json
-"yiisoft/yii2-firebird": "*"
+"edgardmessias/yii2-firebird": "*"
 ```
 
 to the require section of your composer.json.
