@@ -240,4 +240,13 @@ class QueryBuilder extends \yii\db\QueryBuilder
     {
         return "DELETE FROM " . $this->db->quoteTableName($table);
     }
+    
+    /**
+     * @inheritdoc
+     */
+    public function dropColumn($table, $column)
+    {
+        return "ALTER TABLE " . $this->db->quoteTableName($table)
+            . " DROP " . $this->db->quoteColumnName($column);
+    }
 }

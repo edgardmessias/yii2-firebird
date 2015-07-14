@@ -162,4 +162,22 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         $countAfter = (new Query())->from('animal')->count('*', $this->getConnection(false));
         $this->assertEquals(0, $countAfter);
     }
+    
+    public function testDropColumn()
+    {
+        $connection = $this->getConnection(true);
+        $qb = $this->getQueryBuilder();
+        
+        $columns = $connection->getTableSchema('type', true)->columnNames;
+        array_shift($columns); //Prevent to remove all columns
+        
+        foreach ($columns as $column) {
+            $connection->createCommand($qb->dropColumn('type', $column))->execute();
+        }
+        
+        $schema = $connection->getTableSchema('type', true);
+        foreach ($columns as $column) {
+            $this->assertNotContains($column, $schema->columnNames);
+        }
+    }
 }
