@@ -250,10 +250,62 @@ class QueryBuilder extends \yii\db\QueryBuilder
             . " DROP " . $this->db->quoteColumnName($column);
     }
     
+    /**
+     * @inheritdoc
+     */
     public function renameColumn($table, $oldName, $newName)
     {
         return "ALTER TABLE " . $this->db->quoteTableName($table)
             . " ALTER " . $this->db->quoteColumnName($oldName)
             . " TO " . $this->db->quoteColumnName($newName);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function alterColumn($table, $column, $type)
+    {
+        $schema = $this->db->getSchema();
+        $tableSchema = $schema->getTableSchema($table);
+        $columnSchema = $tableSchema->getColumn($column);
+        
+        $allowNullNewType = !preg_match("/not +null/i", $type);
+        
+        $type = preg_replace("/ +(not)? *null/i", "", $type);
+        
+        $hasType = false;
+        
+        $matches = [];
+        if (isset($this->typeMap[$type])) {
+            $hasType = true;
+        } elseif (preg_match('/^(\w+)[\( ]/', $type, $matches)) {
+            if (isset($this->typeMap[$matches[1]])) {
+                $hasType = true;
+            }
+        }
+        
+        $baseSql    = 'ALTER TABLE ' . $this->db->quoteTableName($table)
+        . ' ALTER '. $this->db->quoteColumnName($column)
+        . (($hasType)? ' TYPE ': ' ') .  $this->getColumnType($type);
+        
+        if ($columnSchema->allowNull == $allowNullNewType) {
+            return $baseSql;
+        } else {
+            $sql = 'EXECUTE BLOCK AS BEGIN'
+                . ' EXECUTE STATEMENT ' . $this->db->quoteValue($baseSql) . ';'
+                . ' UPDATE RDB$RELATION_FIELDS SET RDB$NULL_FLAG = ' . ($allowNullNewType ? 'NULL' : '1')
+                . ' WHERE UPPER(RDB$FIELD_NAME) = UPPER(\'' . $column . '\') AND UPPER(RDB$RELATION_NAME) = UPPER(\'' . $table . '\');';
+            /**
+             * In any case (whichever option you choose), make sure that the column doesn't have any NULLs.
+             * Firebird will not check it for you. Later when you backup the database, everything is fine,
+             * but restore will fail as the NOT NULL column has NULLs in it. To be safe, each time you change from NULL to NOT NULL.
+             */
+            if (!$allowNullNewType) {
+                $sql .= ' UPDATE ' . $this->db->quoteTableName($table) . ' SET ' . $this->db->quoteColumnName($column) . ' = 0'
+                    . ' WHERE ' . $this->db->quoteColumnName($column) . ' IS NULL;';
+            }
+            $sql .= ' END';
+            return $sql;
+        }
     }
 }

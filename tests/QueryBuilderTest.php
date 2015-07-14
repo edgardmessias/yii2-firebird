@@ -198,4 +198,23 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
             $this->assertContains($column.'_new', $schema->columnNames);
         }
     }
+    
+    public function testAlterColumn()
+    {
+        $connection = $this->getConnection(true);
+        $qb = $this->getQueryBuilder();
+        
+        $connection->createCommand($qb->alterColumn('customer', 'email', Schema::TYPE_STRING . '(128) NULL'))->execute();
+        $connection->createCommand($qb->alterColumn('customer', 'name', "SET DEFAULT 'NO NAME'"))->execute();
+        $connection->createCommand($qb->alterColumn('customer', 'name', Schema::TYPE_STRING . "(128) NOT NULL"))->execute();
+        $connection->createCommand($qb->alterColumn('customer', 'profile_id', Schema::TYPE_INTEGER . ' NOT NULL'))->execute();
+
+        $newColumns = $connection->getTableSchema('customer', true)->columns;
+        
+        $this->assertEquals(true, $newColumns['email']->allowNull);
+        $this->assertEquals(false, $newColumns['name']->allowNull);
+        $this->assertEquals('NO NAME', $newColumns['name']->defaultValue);
+        $this->assertEquals(false, $newColumns['profile_id']->allowNull);
+        $this->assertEquals(0, $newColumns['profile_id']->defaultValue);
+    }
 }
