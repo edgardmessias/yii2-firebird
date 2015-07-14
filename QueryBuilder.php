@@ -224,4 +224,12 @@ class QueryBuilder extends \yii\db\QueryBuilder
 
         return 'EXECUTE block AS BEGIN ' . implode(' ', $values) . ' END;';
     }
+    
+    /**
+     * @inheritdoc
+     */
+    public function renameTable($oldName, $newName)
+    {
+        throw new \yii\base\NotSupportedException($this->db->getDriverName() . ' does not support rename table.');
+    }
 }

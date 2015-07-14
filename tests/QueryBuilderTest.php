@@ -124,8 +124,8 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         return $conditions;
     }
     
-        public function testSelectSubquery()
-        {
+    public function testSelectSubquery()
+    {
         $subquery = (new Query())
             ->select('COUNT(*)')
             ->from('operations')
@@ -138,5 +138,13 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         $expected = $this->replaceQuotes('SELECT *, (SELECT COUNT(*) AS COUNT_ALL FROM `operations` WHERE account_id = accounts.id) AS `operations_count` FROM `accounts`');
         $this->assertEquals($expected, $sql);
         $this->assertEmpty($params);
-        }
+    }
+        
+    public function testRenameTable()
+    {
+        $this->setExpectedException('\yii\base\NotSupportedException');
+
+        $qb = $this->getQueryBuilder();
+        $qb->renameTable('null_values', 'null_values2');
+    }
 }
