@@ -180,4 +180,22 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
             $this->assertNotContains($column, $schema->columnNames);
         }
     }
+    
+    public function testRenameColumn()
+    {
+        $connection = $this->getConnection(true);
+        $qb = $this->getQueryBuilder();
+        
+        $columns = $connection->getTableSchema('type', true)->columnNames;
+        
+        foreach ($columns as $column) {
+            $connection->createCommand($qb->renameColumn('type', $column, $column.'_new'))->execute();
+        }
+        
+        $schema = $connection->getTableSchema('type', true);
+        foreach ($columns as $column) {
+            $this->assertNotContains($column, $schema->columnNames);
+            $this->assertContains($column.'_new', $schema->columnNames);
+        }
+    }
 }

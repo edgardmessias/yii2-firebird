@@ -249,4 +249,11 @@ class QueryBuilder extends \yii\db\QueryBuilder
         return "ALTER TABLE " . $this->db->quoteTableName($table)
             . " DROP " . $this->db->quoteColumnName($column);
     }
+    
+    public function renameColumn($table, $oldName, $newName)
+    {
+        return "ALTER TABLE " . $this->db->quoteTableName($table)
+            . " ALTER " . $this->db->quoteColumnName($oldName)
+            . " TO " . $this->db->quoteColumnName($newName);
+    }
 }
