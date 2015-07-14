@@ -345,8 +345,9 @@ class Schema extends \yii\db\Schema
 
         $c->defaultValue = null;
         if ($defaultValue !== null) {
-            if ($c->type == self::TYPE_TIMESTAMP && trim($defaultValue) == 'CURRENT_TIMESTAMP') {
-                $c->defaultValue = new \yii\db\Expression('CURRENT_TIMESTAMP');
+            if (in_array($c->type, [self::TYPE_DATE, self::TYPE_DATETIME, self::TYPE_TIME, self::TYPE_TIMESTAMP]) 
+                    && preg_match('/(CURRENT_|NOW|NULL|TODAY|TOMORROW|YESTERDAY)/i', $defaultValue)) {
+                $c->defaultValue = new \yii\db\Expression(trim($defaultValue));
             } else {
                 $c->defaultValue = $c->phpTypecast($defaultValue);
             }
