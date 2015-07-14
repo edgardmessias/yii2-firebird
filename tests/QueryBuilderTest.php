@@ -147,4 +147,19 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         $qb = $this->getQueryBuilder();
         $qb->renameTable('null_values', 'null_values2');
     }
+    
+    public function testTruncateTable()
+    {
+        $countBefore = (new Query())->from('animal')->count('*', $this->getConnection(false));
+        $this->assertEquals(2, $countBefore);
+
+        $qb = $this->getQueryBuilder();
+        
+        $sqlTruncate = $qb->truncateTable('animal');
+        $this->assertEquals('DELETE FROM animal', $sqlTruncate);
+        
+        $this->getConnection(false)->createCommand($sqlTruncate)->execute();
+        $countAfter = (new Query())->from('animal')->count('*', $this->getConnection(false));
+        $this->assertEquals(0, $countAfter);
+    }
 }

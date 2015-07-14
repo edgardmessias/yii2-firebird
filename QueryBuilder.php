@@ -232,4 +232,12 @@ class QueryBuilder extends \yii\db\QueryBuilder
     {
         throw new \yii\base\NotSupportedException($this->db->getDriverName() . ' does not support rename table.');
     }
+    
+    /**
+     * @inheritdoc
+     */
+    public function truncateTable($table)
+    {
+        return "DELETE FROM " . $this->db->quoteTableName($table);
+    }
 }
