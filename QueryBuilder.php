@@ -39,6 +39,9 @@ class QueryBuilder extends \yii\db\QueryBuilder
         Schema::TYPE_MONEY     => 'numeric(18,4)',
     ];
 
+    /**
+     * @inheritdoc
+     */
     public function buildSelect($columns, &$params, $distinct = false, $selectOption = null)
     {
         if (is_array($columns)) {
@@ -59,6 +62,9 @@ class QueryBuilder extends \yii\db\QueryBuilder
         return parent::buildSelect($columns, $params, $distinct, $selectOption);
     }
 
+    /**
+     * @inheritdoc
+     */
     protected function buildCompositeInCondition($operator, $columns, $values, &$params)
     {
         $quotedColumns = [];
@@ -82,6 +88,9 @@ class QueryBuilder extends \yii\db\QueryBuilder
         return '(' . implode($operator === 'IN' ? ' OR ' : ' AND ', $vss) . ')';
     }
 
+    /**
+     * @inheritdoc
+     */
     public function buildOrderByAndLimit($sql, $orderBy, $limit, $offset)
     {
 
@@ -125,15 +134,14 @@ class QueryBuilder extends \yii\db\QueryBuilder
         return $sql;
     }
 
+    /**
+     * @inheritdoc
+     */
     public function insert($table, $columns, &$params)
     {
         $schema = $this->db->getSchema();
-        $autoIncrementColumn = null;
         if (($tableSchema = $schema->getTableSchema($table)) !== null) {
             $columnSchemas = $tableSchema->columns;
-            if ($tableSchema->sequenceName !== null) {
-                $autoIncrementColumn = $tableSchema->sequenceName;
-            }
         } else {
             $columnSchemas = [];
         }
@@ -143,15 +151,13 @@ class QueryBuilder extends \yii\db\QueryBuilder
                 $columns[$name] = [$value, 'blob'];
             }
         }
-        $sql = parent::insert($table, $columns, $params);
 
-        if ($autoIncrementColumn !== null) {
-            $sql .= ' RETURNING ' . $autoIncrementColumn;
-        }
-
-        return $sql;
+        return parent::insert($table, $columns, $params);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function update($table, $columns, $condition, &$params)
     {
         $schema = $this->db->getSchema();
@@ -169,25 +175,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
     }
 
     /**
-     * Generates a batch INSERT SQL statement.
-     * For example,
-     *
-     * ~~~
-     * $sql = $queryBuilder->batchInsert('user', ['name', 'age'], [
-     *     ['Tom', 30],
-     *     ['Jane', 20],
-     *     ['Linda', 25],
-     * ]);
-     * ~~~
-     *
-     * Note that the values in each row must match the corresponding column names.
-     *
-     * The method will properly escape the column names, and quote the values to be inserted.
-     *
-     * @param string $table the table that new rows will be inserted into.
-     * @param array $columns the column names
-     * @param array $rows the rows to be batch inserted into the table
-     * @return string the batch INSERT SQL statement
+     * @inheritdoc
      */
     public function batchInsert($table, $columns, $rows)
     {
@@ -307,5 +295,39 @@ class QueryBuilder extends \yii\db\QueryBuilder
             $sql .= ' END';
             return $sql;
         }
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function dropIndex($name, $table)
+    {
+        return 'DROP INDEX ' . $this->db->quoteTableName($name);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function resetSequence($table, $value = null)
+    {
+        $tableSchema = $this->db->getTableSchema($table);
+        if ($tableSchema === null) {
+            throw new InvalidParamException("Table not found: $table");
+        }
+        if ($tableSchema->sequenceName === null) {
+            throw new InvalidParamException("There is not sequence associated with table '$table'.");
+        }
+
+        if ($value !== null) {
+            $value = (int) $value;
+        } else {
+            // use master connection to get the biggest PK value
+            $value = $this->db->useMaster(function (Connection $db) use ($tableSchema) {
+                $key = reset($tableSchema->primaryKey);
+                return $db->createCommand("SELECT MAX({$this->db->quoteColumnName($key)}) FROM {$this->db->quoteTableName($tableSchema->name)}")->queryScalar();
+            }) + 1;
+        }
+
+        return "ALTER SEQUENCE {$this->db->quoteColumnName($tableSchema->sequenceName)} RESTART WITH $value";
     }
 }

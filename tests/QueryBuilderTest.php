@@ -217,4 +217,47 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         $this->assertEquals(false, $newColumns['profile_id']->allowNull);
         $this->assertEquals(0, $newColumns['profile_id']->defaultValue);
     }
+        
+    public function testDropIndex()
+    {
+        $connection = $this->getConnection(true);
+        $qb = $this->getQueryBuilder();
+        
+        $this->assertEquals('DROP INDEX idx_int_col', $qb->dropIndex('idx_int_col', 'type'));
+        
+        $columns = $connection->getTableSchema('type', true)->columnNames;
+        
+        foreach ($columns as $column) {
+            $result = $connection->createCommand($qb->createIndex('idx_' .$column, 'type', $column))->execute();
+        }
+        
+        foreach ($columns as $column) {
+            $result = $connection->createCommand($qb->dropIndex('idx_' .$column, 'type'))->execute();
+        }
+    }
+    
+    public function testResetSequence()
+    {
+        $connection = $this->getConnection(true);
+        $qb = $this->getQueryBuilder();
+        
+        $this->assertEquals('ALTER SEQUENCE seq_animal_id RESTART WITH 3', $qb->resetSequence('animal'));
+        $this->assertEquals('ALTER SEQUENCE seq_animal_id RESTART WITH 10', $qb->resetSequence('animal', 10));
+        
+        $this->assertEquals('ALTER SEQUENCE gen_profile_id RESTART WITH 3', $qb->resetSequence('profile'));
+        $this->assertEquals('ALTER SEQUENCE gen_profile_id RESTART WITH 10', $qb->resetSequence('profile', 10));
+        
+        $this->assertEquals(2, (new Query())->from('profile')->max('id', $connection));
+        
+        $connection->createCommand()->insert('profile', ['description' => 'profile customer 3'])->execute();
+        $this->assertEquals(3, (new Query())->from('profile')->max('id', $connection));
+        
+        $connection->createCommand($qb->resetSequence('profile'))->execute();
+        $connection->createCommand()->insert('profile', ['description' => 'profile customer 4'])->execute();
+        $this->assertEquals(4, (new Query())->from('profile')->max('id', $connection));
+        
+        $connection->createCommand($qb->resetSequence('profile', 10))->execute();
+        $connection->createCommand()->insert('profile', ['description' => 'profile customer 11'])->execute();
+        $this->assertEquals(11, (new Query())->from('profile')->max('id', $connection));
+    }
 }

@@ -28,7 +28,6 @@ use yii\db\TableSchema;
 class Schema extends \yii\db\Schema
 {
 
-    private $_sequences = [];
     private $_lastInsertID = null;
 
     /**
@@ -95,16 +94,6 @@ class Schema extends \yii\db\Schema
         $this->resolveTableNames($table, $name);
         if ($this->findColumns($table)) {
             $this->findConstraints($table);
-            if (is_string($table->primaryKey) && isset($this->_sequences[$table->fullName . '.' . $table->primaryKey])) {
-                $table->sequenceName = $this->_sequences[$table->fullName . '.' . $table->primaryKey];
-            } elseif (is_array($table->primaryKey)) {
-                foreach ($table->primaryKey as $pk) {
-                    if (isset($this->_sequences[$table->fullName . '.' . $pk])) {
-                        $table->sequenceName = $this->_sequences[$table->fullName . '.' . $pk];
-                        break;
-                    }
-                }
-            }
             return $table;
         }
         return null;
@@ -164,7 +153,7 @@ class Schema extends \yii\db\Schema
                     fld.rdb$field_precision AS fprecision,
                     rel.rdb$null_flag AS fnull,
                     fld.rdb$default_value AS fdefault_value,
-                    (SELECT 1 FROM RDB$TRIGGERS
+                    (SELECT RDB$TRIGGER_SOURCE FROM RDB$TRIGGERS
                         WHERE RDB$SYSTEM_FLAG = 0
                         AND UPPER(RDB$RELATION_NAME)=UPPER(\'' . $table->name . '\')
                         AND RDB$TRIGGER_TYPE = 1
@@ -207,8 +196,13 @@ class Schema extends \yii\db\Schema
         }
         foreach ($columns as $column) {
             $c = $this->loadColumnSchema($column);
-            if ($c->autoIncrement) {
-                $this->_sequences[$table->fullName . '.' . $c->name] = $table->fullName . '.' . $c->name;
+            if ($table->sequenceName === null && $c->autoIncrement) {
+                $matches = [];
+                if (preg_match("/NEW.{$c->name}\s*=\s*GEN_ID\((\w+)/i", $column['fautoinc'], $matches)) {
+                    $table->sequenceName = $matches[1];
+                } elseif (preg_match("/NEW.{$c->name}\s*=\s*NEXT\s+VALUE\s+FOR\s+(\w+)/i", $column['fautoinc'], $matches)) {
+                    $table->sequenceName = $matches[1];
+                }
             }
             $table->columns[$c->name] = $c;
             if ($c->isPrimaryKey) {
@@ -239,7 +233,7 @@ class Schema extends \yii\db\Schema
         $c->name = strtolower(rtrim($column['fname']));
         $c->allowNull = $column['fnull'] !== '1';
         $c->isPrimaryKey = $column['fprimary'];
-        $c->autoIncrement = $column['fautoinc'] === '1';
+        $c->autoIncrement = (boolean)$column['fautoinc'];
 
         $c->type = self::TYPE_STRING;
 
@@ -345,7 +339,7 @@ class Schema extends \yii\db\Schema
 
         $c->defaultValue = null;
         if ($defaultValue !== null) {
-            if (in_array($c->type, [self::TYPE_DATE, self::TYPE_DATETIME, self::TYPE_TIME, self::TYPE_TIMESTAMP]) 
+            if (in_array($c->type, [self::TYPE_DATE, self::TYPE_DATETIME, self::TYPE_TIME, self::TYPE_TIMESTAMP])
                     && preg_match('/(CURRENT_|NOW|NULL|TODAY|TOMORROW|YESTERDAY)/i', $defaultValue)) {
                 $c->defaultValue = new \yii\db\Expression(trim($defaultValue));
             } else {
@@ -443,52 +437,52 @@ class Schema extends \yii\db\Schema
     }
 
     /**
-     * Executes the INSERT command, returning primary key values.
-     * @param string $table the table that new rows will be inserted into.
-     * @param array $columns the column data (name => value) to be inserted into the table.
-     * @return array primary key values or false if the command fails
-     * @since 2.0.4
+     * @inheritdoc
      */
     public function insert($table, $columns)
     {
-
-        $tableSchema = $this->getTableSchema($table);
-
-        $command = $this->db->createCommand()->insert($table, $columns);
-
-        if ($tableSchema->sequenceName !== null) {
-            $this->_lastInsertID = $command->queryScalar();
-            if ($this->_lastInsertID === false) {
-                return false;
+        $this->_lastInsertID = false;
+        $params = [];
+        $sql = $this->db->getQueryBuilder()->insert($table, $columns, $params);
+        $returnColumns = $this->getTableSchema($table)->primaryKey;
+        if (!empty($returnColumns)) {
+            $returning = [];
+            foreach ((array)$returnColumns as $name) {
+                $returning[] = $this->quoteColumnName($name);
             }
+            $sql .= ' RETURNING ' . implode(', ', $returning);
+        }
+
+        $command = $this->db->createCommand($sql, $params);
+        $command->prepare(false);
+        $result = $command->queryOne();
+
+        if (!$command->pdoStatement->rowCount()) {
+            return false;
         } else {
-            if (!$command->execute()) {
-                return false;
+            if (!empty($returnColumns)) {
+                foreach ((array)$returnColumns as $name) {
+                    if ($this->getTableSchema($table)->getColumn($name)->autoIncrement) {
+                        $this->_lastInsertID = $result[$name];
+                        break;
+                    }
+                }
             }
+            return $result;
         }
-        $result = [];
-        foreach ($tableSchema->primaryKey as $name) {
-            if ($tableSchema->columns[$name]->autoIncrement) {
-                $result[$name] = $this->getLastInsertID($tableSchema->sequenceName);
-                break;
-            } else {
-                $result[$name] = isset($columns[$name]) ? $columns[$name] : $tableSchema->columns[$name]->defaultValue;
-            }
-        }
-        return $result;
     }
 
     /**
-     * Returns the ID of the last inserted row or sequence value.
-     * @param string $sequenceName name of the sequence object (required by some DBMS)
-     * @return string the row ID of the last row inserted, or the last value retrieved from the sequence object
-     * @throws InvalidCallException if the DB connection is not active
-     * @see http://www.php.net/manual/en/function.PDO-lastInsertId.php
+     * @inheritdoc
      */
     public function getLastInsertID($sequenceName = '')
     {
         if (!$this->db->isActive) {
             throw new InvalidCallException('DB Connection is not active.');
+        }
+        
+        if ($sequenceName !== '') {
+            return $this->db->createCommand('SELECT GEN_ID('. $this->db->quoteTableName($sequenceName) .  ', 0 ) FROM RDB$DATABASE;')->queryScalar();
         }
 
         if ($this->_lastInsertID !== false) {

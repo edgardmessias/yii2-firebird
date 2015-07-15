@@ -99,8 +99,8 @@ END;
 -- SQL
 EXECUTE block AS
 BEGIN
-    IF (EXISTS(SELECT 1 FROM rdb$generators WHERE LOWER(rdb$generator_name) = 'gen_animal_id')) THEN 
-        EXECUTE STATEMENT 'DROP GENERATOR gen_animal_id;';
+    IF (EXISTS(SELECT 1 FROM rdb$generators WHERE LOWER(rdb$generator_name) = 'seq_animal_id')) THEN 
+        EXECUTE STATEMENT 'DROP GENERATOR seq_animal_id;';
 END;
 -- SQL
 EXECUTE block AS
@@ -307,13 +307,13 @@ CREATE TABLE animal (
   PRIMARY KEY (id)
 );
 -- SQL
-CREATE GENERATOR gen_animal_id;
+CREATE SEQUENCE seq_animal_id;
 -- SQL
 CREATE TRIGGER tr_animal FOR animal
 ACTIVE BEFORE INSERT POSITION 0
 AS
 BEGIN
-    if (NEW.ID is NULL) then NEW.ID = GEN_ID(gen_animal_id, 1);
+    if (NEW.ID is NULL) then NEW.ID = NEXT VALUE FOR seq_animal_id;
 END
 -- SQL
 CREATE TABLE default_pk (

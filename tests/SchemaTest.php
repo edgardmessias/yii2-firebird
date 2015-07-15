@@ -119,4 +119,13 @@ class SchemaTest extends \yiiunit\framework\db\SchemaTest
         }
         fclose($fp);
     }
+    
+    public function testGetLastInsertID()
+    {
+        /* @var $schema Schema */
+        $schema = $this->getConnection()->schema;
+        $this->assertEquals(null, $schema->getLastInsertID());
+        $this->assertEquals(2, $schema->getLastInsertID($schema->getTableSchema('animal')->sequenceName));
+        $this->assertEquals(2, $schema->getLastInsertID($schema->getTableSchema('profile')->sequenceName));
+    }
 }
