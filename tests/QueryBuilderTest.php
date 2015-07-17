@@ -260,4 +260,35 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         $connection->createCommand()->insert('profile', ['description' => 'profile customer 11'])->execute();
         $this->assertEquals(11, (new Query())->from('profile')->max('id', $connection));
     }
+    
+    public function testCreateTableWithAutoIncrement()
+    {
+        $qb = $this->getQueryBuilder();
+        if ($qb->db->getTableSchema('autoincrement_table', true) !== null) {
+            $this->getConnection(false)->createCommand($qb->dropTable('autoincrement_table'))->execute();
+        }
+        $columns = [
+            'id' => Schema::TYPE_PK,
+            'description' => Schema::TYPE_STRING,
+        ];
+        $this->getConnection(false)->createCommand($qb->createTable('autoincrement_table', $columns))->execute();
+        
+        $this->getConnection(false)->createCommand()->insert('autoincrement_table', ['description' => 'auto increment 1'])->execute();
+        $this->getConnection(false)->createCommand()->insert('autoincrement_table', ['description' => 'auto increment 2'])->execute();
+        $this->getConnection(false)->createCommand()->insert('autoincrement_table', ['description' => 'auto increment 3'])->execute();
+        $this->getConnection(false)->createCommand()->insert('autoincrement_table', ['description' => 'auto increment 4'])->execute();
+
+        $this->assertEquals(4, (new Query())->from('autoincrement_table')->max('id', $this->getConnection(false)));
+        
+        //Drop and recreate, for test sequences
+        $this->getConnection(false)->createCommand($qb->dropTable('autoincrement_table'))->execute();
+        $this->getConnection(false)->createCommand($qb->createTable('autoincrement_table', $columns))->execute();
+        
+        $this->getConnection(false)->createCommand()->insert('autoincrement_table', ['description' => 'auto increment 1'])->execute();
+        $this->getConnection(false)->createCommand()->insert('autoincrement_table', ['description' => 'auto increment 2'])->execute();
+        $this->getConnection(false)->createCommand()->insert('autoincrement_table', ['description' => 'auto increment 3'])->execute();
+        $this->getConnection(false)->createCommand()->insert('autoincrement_table', ['description' => 'auto increment 4'])->execute();
+
+        $this->assertEquals(4, (new Query())->from('autoincrement_table')->max('id', $this->getConnection(false)));
+    }
 }

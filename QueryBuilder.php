@@ -330,4 +330,65 @@ class QueryBuilder extends \yii\db\QueryBuilder
 
         return "ALTER SEQUENCE {$this->db->quoteColumnName($tableSchema->sequenceName)} RESTART WITH $value";
     }
+    
+    /**
+     * @inheritdoc
+     */
+    public function createTable($table, $columns, $options = null)
+    {
+        $sql = parent::createTable($table, $columns, $options);
+        
+        foreach ($columns as $name => $type) {
+            if (!is_string($name)) {
+                continue;
+            }
+            
+            if (strpos($type, Schema::TYPE_PK) === 0 || strpos($type, Schema::TYPE_BIGPK) === 0) {
+                $sqlTrigger = <<<SQLTRIGGER
+CREATE TRIGGER tr_{$table}_{$name} FOR {$this->db->quoteTableName($table)}
+ACTIVE BEFORE INSERT POSITION 0
+AS
+BEGIN
+    if (NEW.{$this->db->quoteColumnName($name)} is NULL) then NEW.{$this->db->quoteColumnName($name)} = NEXT VALUE FOR seq_{$table}_{$name};
+END
+SQLTRIGGER;
+                
+                $sqlBlock = <<<SQL
+EXECUTE block AS
+BEGIN
+    EXECUTE STATEMENT {$this->db->quoteValue($sql)};
+    EXECUTE STATEMENT {$this->db->quoteValue("CREATE SEQUENCE seq_{$table}_{$name}")};
+    EXECUTE STATEMENT {$this->db->quoteValue($sqlTrigger)};
+END;
+SQL;
+
+                return $sqlBlock;
+            }
+        }
+        
+        return $sql;
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function dropTable($table)
+    {
+        $sql = parent::dropTable($table);
+        
+        $tableSchema = $this->db->getTableSchema($table);
+        if ($tableSchema === null || $tableSchema->sequenceName === null) {
+            return $sql;
+        }
+        
+        $sqlBlock = <<<SQL
+EXECUTE block AS
+BEGIN
+    EXECUTE STATEMENT {$this->db->quoteValue($sql)};
+    EXECUTE STATEMENT {$this->db->quoteValue("DROP SEQUENCE {$tableSchema->sequenceName}")};
+END;
+SQL;
+                return $sqlBlock;
+        
+    }
 }
