@@ -9,7 +9,14 @@ Requirements
 
 At least Firebird version 2.0 is required. However, in order to use all extension features.
 
-Not use BLOB types. [See this bug](https://bugs.php.net/bug.php?id=61183)
+Unsupported
+------------
+
+Functions not supported by the Firebird database:
+
+ * Rename Table
+ * Check Integrity
+ * BLOB data type - [See this bug](https://bugs.php.net/bug.php?id=61183)
 
 Installation
 ------------
@@ -19,7 +26,7 @@ The preferred way to install this extension is through [composer](http://getcomp
 Either run
 
 ```
-php composer.phar require --prefer-dist edgardmessias/yii2-firebird
+php composer.phar require --prefer-dist "edgardmessias/yii2-firebird:*"
 ```
 
 or add
@@ -42,7 +49,7 @@ return [
     'components' => [
         'db' => [
             'class' => 'edgardmessias\db\firebird\Connection',
-            'dsn' => 'firebird:dbname=tests/data/TEST.FDB',
+            'dsn' => 'firebird:dbname=localhost:/tmp/TEST.FDB;charset=ISO8859_1',
             'username' => 'username',
             'password' => 'password',
         ],
