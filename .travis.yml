@@ -29,6 +29,7 @@ cache:
     - $HOME/.composer/cache
 
 before_install:
+  - sudo sh -c "echo 'precedence ::ffff:0:0/96 100' >> /etc/gai.conf"
   - sudo apt-get update -qq 
   - sudo apt-get install -qq firebird$FB-super firebird$FB-dev expect
   - if [[ "$FB" == "2.1" ]]; then export DEBIAN_FRONTEND=readline; fi
@@ -47,9 +48,9 @@ before_install:
 install:
   - echo "extension=pdo_firebird.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - travis_retry composer self-update && composer --version
-  - travis_retry composer global require "fxp/composer-asset-plugin:~1.0.0"
+  - travis_retry composer global require "fxp/composer-asset-plugin:~1.0.0" --prefer-source --no-interaction
   - export PATH="$HOME/.composer/vendor/bin:$PATH"
-  - travis_retry composer install --prefer-dist --no-interaction
+  - travis_retry composer install --prefer-source --no-interaction
 
 before_script:
   # show some versions and env information
