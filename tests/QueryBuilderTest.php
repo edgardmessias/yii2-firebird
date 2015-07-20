@@ -272,23 +272,24 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
             'description' => Schema::TYPE_STRING,
         ];
         $this->getConnection(false)->createCommand($qb->createTable('autoincrement_table', $columns))->execute();
+        $qb->db->getTableSchema('autoincrement_table', true); //Force update schema
         
-        $this->getConnection(false)->createCommand()->insert('autoincrement_table', ['description' => 'auto increment 1'])->execute();
-        $this->getConnection(false)->createCommand()->insert('autoincrement_table', ['description' => 'auto increment 2'])->execute();
-        $this->getConnection(false)->createCommand()->insert('autoincrement_table', ['description' => 'auto increment 3'])->execute();
-        $this->getConnection(false)->createCommand()->insert('autoincrement_table', ['description' => 'auto increment 4'])->execute();
-
+        $this->assertEquals(1, $this->getConnection(false)->getSchema()->insert('autoincrement_table', ['description' => 'auto increment 1'])['id']);
+        $this->assertEquals(2, $this->getConnection(false)->getSchema()->insert('autoincrement_table', ['description' => 'auto increment 2'])['id']);
+        $this->assertEquals(3, $this->getConnection(false)->getSchema()->insert('autoincrement_table', ['description' => 'auto increment 3'])['id']);
+        $this->assertEquals(4, $this->getConnection(false)->getSchema()->insert('autoincrement_table', ['description' => 'auto increment 4'])['id']);
+        
         $this->assertEquals(4, (new Query())->from('autoincrement_table')->max('id', $this->getConnection(false)));
         
         //Drop and recreate, for test sequences
         $this->getConnection(false)->createCommand($qb->dropTable('autoincrement_table'))->execute();
         $this->getConnection(false)->createCommand($qb->createTable('autoincrement_table', $columns))->execute();
         
-        $this->getConnection(false)->createCommand()->insert('autoincrement_table', ['description' => 'auto increment 1'])->execute();
-        $this->getConnection(false)->createCommand()->insert('autoincrement_table', ['description' => 'auto increment 2'])->execute();
-        $this->getConnection(false)->createCommand()->insert('autoincrement_table', ['description' => 'auto increment 3'])->execute();
-        $this->getConnection(false)->createCommand()->insert('autoincrement_table', ['description' => 'auto increment 4'])->execute();
-
+        $this->assertEquals(1, $this->getConnection(false)->getSchema()->insert('autoincrement_table', ['description' => 'auto increment 1'])['id']);
+        $this->assertEquals(2, $this->getConnection(false)->getSchema()->insert('autoincrement_table', ['description' => 'auto increment 2'])['id']);
+        $this->assertEquals(3, $this->getConnection(false)->getSchema()->insert('autoincrement_table', ['description' => 'auto increment 3'])['id']);
+        $this->assertEquals(4, $this->getConnection(false)->getSchema()->insert('autoincrement_table', ['description' => 'auto increment 4'])['id']);
+        
         $this->assertEquals(4, (new Query())->from('autoincrement_table')->max('id', $this->getConnection(false)));
     }
 }
