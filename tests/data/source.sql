@@ -99,6 +99,12 @@ END;
 -- SQL
 EXECUTE block AS
 BEGIN
+    IF (EXISTS(SELECT 1 FROM rdb$generators WHERE LOWER(rdb$generator_name) = 'seq_null_values_id')) THEN 
+        EXECUTE STATEMENT 'DROP SEQUENCE seq_null_values_id;';
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
     IF (EXISTS(SELECT 1 FROM rdb$generators WHERE LOWER(rdb$generator_name) = 'seq_animal_id')) THEN 
         EXECUTE STATEMENT 'DROP GENERATOR seq_animal_id;';
 END;
@@ -281,6 +287,15 @@ CREATE TABLE null_values (
   var3 INTEGER DEFAULT NULL,
   stringcol VARCHAR(32) DEFAULT NULL
 );
+-- SQL
+CREATE SEQUENCE seq_null_values_id;
+-- SQL
+CREATE TRIGGER tr_null_values FOR null_values
+ACTIVE BEFORE INSERT POSITION 0
+AS
+BEGIN
+    if (NEW.ID is NULL) then NEW.ID = NEXT VALUE FOR seq_null_values_id;
+END
 -- SQL
 CREATE TABLE type (
   int_col INTEGER NOT NULL,
