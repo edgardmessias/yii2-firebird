@@ -38,9 +38,10 @@ class Schema extends \yii\db\Schema
         'SQLSTATE[23'                                               => 'yii\db\IntegrityException',
         'SQLSTATE[HY000]: General error: -803 violation of PRIMARY' => 'yii\db\IntegrityException',
     ];
-    public $revervedWords = [
+    public $reservedWords = [
         'ORDER',
         'TIME',
+        'POSITION',
     ];
 
     /**
@@ -73,7 +74,7 @@ class Schema extends \yii\db\Schema
 
     public function quoteSimpleTableName($name)
     {
-        if (in_array(strtoupper($name), $this->revervedWords)) {
+        if (in_array(strtoupper($name), $this->reservedWords)) {
             return strpos($name, '"') !== false ? $name : '"' . $name . '"';
         }
 
@@ -82,7 +83,7 @@ class Schema extends \yii\db\Schema
 
     public function quoteSimpleColumnName($name)
     {
-        if (in_array(strtoupper($name), $this->revervedWords)) {
+        if (in_array(strtoupper($name), $this->reservedWords)) {
             return parent::quoteSimpleColumnName($name);
         }
         return $name;
