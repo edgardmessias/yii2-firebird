@@ -103,6 +103,9 @@ class Command extends \yii\db\Command
         }
         $params = [];
         foreach ($this->params as $name => $value) {
+            if (is_string($name) && strncmp(':', $name, 1)) {
+                $name = ':' . $name;
+            }
             if (is_string($value)) {
                 $params[$name] = $this->db->quoteValue($value);
             } elseif ($value === null) {
