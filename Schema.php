@@ -40,8 +40,9 @@ class Schema extends \yii\db\Schema
     ];
     public $reservedWords = [
         'ORDER',
-        'TIME',
         'POSITION',
+        'TIME',
+        'VALUE',
     ];
 
     /**
