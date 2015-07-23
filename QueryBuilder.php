@@ -50,7 +50,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
                     continue;
                 }
                 $matches = [];
-                if (preg_match("/^(COUNT|SUM|AVG|MIN|MAX)\((\w+|\*)\)$/i", $column, $matches)) {
+                if (preg_match("/^(COUNT|SUM|AVG|MIN|MAX)\([\{\[]{0,2}(\w+|\*)[\}\]]{0,2}\)$/i", $column, $matches)) {
                     $function = $matches[1];
                     $alias = $matches[2] != '*' ? $matches[2] : 'ALL';
 
