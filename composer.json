@@ -27,6 +27,6 @@
         "phpunit/phpunit": "~4.5"
     },
     "autoload": {
-        "psr-4": { "edgardmessias\\db\\firebird\\": "" }
+        "psr-4": { "edgardmessias\\db\\firebird\\": "src" }
     }
 }

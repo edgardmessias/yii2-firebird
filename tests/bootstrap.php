@@ -13,4 +13,4 @@ require_once(__DIR__ . '/../vendor/yiisoft/yii2/Yii.php');
 
 Yii::setAlias('@yiiunit', __DIR__ . '/../vendor/yiisoft/yii2-dev/tests');
 Yii::setAlias('@edgardmessias/unit/db/firebird', __DIR__);
-Yii::setAlias('@edgardmessias/db/firebird', dirname(__DIR__));
+Yii::setAlias('@edgardmessias/db/firebird', __DIR__ . '/../src');
