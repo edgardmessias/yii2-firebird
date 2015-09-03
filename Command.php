@@ -80,6 +80,13 @@ class Command extends \yii\db\Command
      */
     public function setSql($sql)
     {
+        $matches = null;
+        if (preg_match("/^\s*DROP TABLE IF EXISTS (['\"]?([^\s\;]+)['\"]?);?\s*$/i", $sql, $matches)) {
+            if ($this->db->getSchema()->getTableSchema($matches[2]) !== null) {
+                $sql = $this->db->getQueryBuilder()->dropTable($matches[2]);
+            }
+        }
+        
         if ($sql !== $this->_sql) {
             $this->cancel();
             $this->_sql = $this->db->quoteSql($sql);
@@ -108,6 +115,8 @@ class Command extends \yii\db\Command
             }
             if (is_string($value)) {
                 $params[$name] = $this->db->quoteValue($value);
+            } elseif (is_bool($value)) {
+                $params[$name] = ($value ? 'TRUE' : 'FALSE');
             } elseif ($value === null) {
                 $params[$name] = 'NULL';
             } elseif (!is_object($value) && !is_resource($value)) {
@@ -121,7 +130,6 @@ class Command extends \yii\db\Command
         foreach (explode('?', $this->_sql) as $i => $part) {
             $sql .= (isset($params[$i]) ? $params[$i] : '') . $part;
         }
-
         return $sql;
     }
 

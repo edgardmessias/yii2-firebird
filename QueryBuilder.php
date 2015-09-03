@@ -8,6 +8,8 @@
 
 namespace edgardmessias\db\firebird;
 
+use yii\db\Expression;
+
 /**
  *
  * @author Edgard Lorraine Messias <edgardmessias@gmail.com>
@@ -135,6 +137,27 @@ class QueryBuilder extends \yii\db\QueryBuilder
     }
 
     /**
+     *
+     * @param Expression $value
+     * @return Expression
+     */
+    protected function convertExpression($value)
+    {
+        if (!($value instanceof Expression)) {
+            return $value;
+        }
+        
+        $expressionMap = [
+            "strftime('%Y')" => "EXTRACT(YEAR FROM TIMESTAMP 'now')"
+        ];
+        
+        if (isset($expressionMap[$value->expression])) {
+            return new Expression($expressionMap[$value->expression]);
+        }
+        return $value;
+    }
+
+    /**
      * @inheritdoc
      */
     public function insert($table, $columns, &$params)
@@ -147,7 +170,9 @@ class QueryBuilder extends \yii\db\QueryBuilder
         }
 
         foreach ($columns as $name => $value) {
-            if (in_array($columnSchemas[$name]->type, [Schema::TYPE_TEXT, Schema::TYPE_BINARY])) {
+            if ($value instanceof Expression) {
+                $columns[$name] = $this->convertExpression($value);
+            } elseif (in_array($columnSchemas[$name]->type, [Schema::TYPE_TEXT, Schema::TYPE_BINARY])) {
                 $columns[$name] = [$value, 'blob'];
             }
         }
@@ -167,7 +192,9 @@ class QueryBuilder extends \yii\db\QueryBuilder
             $columnSchemas = [];
         }
         foreach ($columns as $name => $value) {
-            if (in_array($columnSchemas[$name]->type, [Schema::TYPE_TEXT, Schema::TYPE_BINARY])) {
+            if ($value instanceof Expression) {
+                $columns[$name] = $this->convertExpression($value);
+            } elseif (in_array($columnSchemas[$name]->type, [Schema::TYPE_TEXT, Schema::TYPE_BINARY])) {
                 $columns[$name] = [$value, 'blob'];
             }
         }

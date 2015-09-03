@@ -427,3 +427,37 @@ EXECUTE block AS
 BEGIN
     INSERT INTO document (title, content, version) VALUES ('Yii 2.0 guide', 'This is Yii 2.0 guide', 0);
 END;
+-- SQL
+/* bit test, see https://github.com/yiisoft/yii2/issues/9006 */
+EXECUTE block AS
+BEGIN
+    IF (EXISTS(SELECT 1 FROM rdb$relations WHERE LOWER(rdb$relation_name) = 'bit_values')) THEN 
+        EXECUTE STATEMENT 'DROP TABLE bit_values;';
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
+    IF (EXISTS(SELECT 1 FROM rdb$generators WHERE LOWER(rdb$generator_name) = 'gen_bit_values_id')) THEN 
+        EXECUTE STATEMENT 'DROP GENERATOR gen_bit_values_id;';
+END;
+-- SQL
+CREATE TABLE bit_values (
+  id INTEGER NOT NULL,
+  val SMALLINT NOT NULL,
+  PRIMARY KEY (id)
+);
+-- SQL
+CREATE GENERATOR gen_bit_values_id;
+-- SQL
+CREATE TRIGGER tr_bit_values FOR bit_values
+ACTIVE BEFORE INSERT POSITION 0
+AS
+BEGIN
+    if (NEW.ID is NULL) then NEW.ID = GEN_ID(gen_bit_values_id, 1);
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
+    INSERT INTO bit_values (id, val) VALUES (1, 0);
+    INSERT INTO bit_values (id, val) VALUES (2, 1);
+END;

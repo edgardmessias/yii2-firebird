@@ -73,6 +73,14 @@ class Schema extends \yii\db\Schema
         return new QueryBuilder($this->db);
     }
 
+    /**
+     * @inheritdoc
+     */
+    public function createColumnSchemaBuilder($type, $length = null)
+    {
+        return new ColumnSchemaBuilder($type, $length);
+    }
+
     public function quoteSimpleTableName($name)
     {
         if (in_array(strtoupper($name), $this->reservedWords)) {
