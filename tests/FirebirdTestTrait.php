@@ -4,7 +4,7 @@ namespace edgardmessias\unit\db\firebird;
 
 trait FirebirdTestTrait
 {
-    private $traitDbs = [];
+    private $_traitDbs = [];
 
     public function setUp()
     {
@@ -17,7 +17,7 @@ trait FirebirdTestTrait
     public function tearDown()
     {
         //close all DBs connections
-        foreach ($this->traitDbs as $db) {
+        foreach ($this->_traitDbs as $db) {
             $db->close();
         }
         parent::tearDown();
@@ -31,7 +31,7 @@ trait FirebirdTestTrait
         /* @var $db \edgardmessias\db\firebird\Connection */
         $db = \Yii::createObject($config);
         
-        $this->traitDbs[] = $db;
+        $this->_traitDbs[] = $db;
         
         if (!$open) {
             return $db;
@@ -47,7 +47,7 @@ trait FirebirdTestTrait
             //Unlock resources of table modification.
             $db->close();
             $db->open();
-            foreach ($this->traitDbs as $db) {
+            foreach ($this->_traitDbs as $db) {
                 if ($db->pdo !== null) {
                     $db->close();
                     $db->open();

@@ -18,7 +18,7 @@ use PDO;
 class PdoAdapter extends PDO
 {
 
-    private $inTransaction = false;
+    private $_inTransaction = false;
 
     /**
      * Do some basic setup for Firebird.
@@ -31,7 +31,7 @@ class PdoAdapter extends PDO
      * Finally call parent constructor.
      *
      */
-    function __construct($dsn, $username, $password, $driver_options = array())
+    public function __construct($dsn, $username, $password, $driver_options = [])
     {
         // Windows OS paths with backslashes should be changed
         $dsn = str_replace("\\", "/", $dsn);
@@ -53,7 +53,7 @@ class PdoAdapter extends PDO
         $this->setAttribute(PDO::ATTR_AUTOCOMMIT, false);
 
         if ($isolationLevel === false) {
-            $this->inTransaction = true;
+            $this->_inTransaction = true;
             return true;
         }
 
@@ -61,7 +61,7 @@ class PdoAdapter extends PDO
             $r = $this->exec("SET TRANSACTION");
             $success = ($r !== false);
             if ($success) {
-                $this->inTransaction = true;
+                $this->_inTransaction = true;
             }
             return ($success);
         }
@@ -69,7 +69,7 @@ class PdoAdapter extends PDO
         $r = $this->exec("SET TRANSACTION ISOLATION LEVEL $isolationLevel");
         $success = ($r !== false);
         if ($success) {
-            $this->inTransaction = true;
+            $this->_inTransaction = true;
         }
         return ($success);
     }
@@ -84,7 +84,7 @@ class PdoAdapter extends PDO
         $this->setAttribute(PDO::ATTR_AUTOCOMMIT, true);
         $success = ($r !== false);
         if ($success) {
-            $this->inTransaction = false;
+            $this->_inTransaction = false;
         }
         return ($success);
     }
@@ -99,7 +99,7 @@ class PdoAdapter extends PDO
         $this->setAttribute(PDO::ATTR_AUTOCOMMIT, true);
         $success = ($r !== false);
         if ($success) {
-            $this->inTransaction = false;
+            $this->_inTransaction = false;
         }
         return ($success);
     }
@@ -110,6 +110,6 @@ class PdoAdapter extends PDO
      */
     public function inTransaction()
     {
-        return $this->inTransaction;
+        return $this->_inTransaction;
     }
 }

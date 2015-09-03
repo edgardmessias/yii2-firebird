@@ -260,7 +260,7 @@ class Schema extends \yii\db\Schema
             $defaultValue = $column['fdefault_value'];
         }
         $dbType = "";
-        $baseTypes = array(
+        $baseTypes = [
             7   => 'SMALLINT',
             8   => 'INTEGER',
             16  => 'INT64',
@@ -275,11 +275,11 @@ class Schema extends \yii\db\Schema
             261 => 'BLOB',
             40  => 'CSTRING',
             45  => 'BLOB_ID',
-        );
-        $baseCharTypes = array(
+        ];
+        $baseCharTypes = [
             37 => 'VARCHAR',
             14 => 'CHAR',
-        );
+        ];
         if (array_key_exists((int) $column['fcodtype'], $baseTypes)) {
             $dbType = $baseTypes[(int) $column['fcodtype']];
         } elseif (array_key_exists((int) $column['fcodtype'], $baseCharTypes)) {
