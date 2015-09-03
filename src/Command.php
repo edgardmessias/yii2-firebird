@@ -27,6 +27,11 @@ class Command extends \yii\db\Command
     private $_sql;
 
     /**
+     * @var string name of the table, which schema, should be refreshed after command execution.
+     */
+    private $_refreshTableName;
+
+    /**
      * Binds a parameter to the SQL statement to be executed.
      * @param string|integer $name parameter identifier. For a prepared statement
      * using named placeholders, this will be a parameter name of
@@ -84,6 +89,8 @@ class Command extends \yii\db\Command
         if (preg_match("/^\s*DROP TABLE IF EXISTS (['\"]?([^\s\;]+)['\"]?);?\s*$/i", $sql, $matches)) {
             if ($this->db->getSchema()->getTableSchema($matches[2]) !== null) {
                 $sql = $this->db->getQueryBuilder()->dropTable($matches[2]);
+            } else {
+                $sql = 'select 1 from RDB$DATABASE;'; //Prevent Drop Table
             }
         }
         
@@ -92,6 +99,7 @@ class Command extends \yii\db\Command
             $this->_sql = $this->db->quoteSql($sql);
             $this->_pendingParams = [];
             $this->params = [];
+            $this->_refreshTableName = null;
         }
 
         return $this;
@@ -188,5 +196,28 @@ class Command extends \yii\db\Command
         }
 
         return $this;
+    }
+
+    /**
+     * Marks a specified table schema to be refreshed after command execution.
+     * @param string $name name of the table, which schema should be refreshed.
+     * @return $this this command instance
+     * @since 2.0.6
+     */
+    protected function requireTableSchemaRefresh($name)
+    {
+        $this->_refreshTableName = $name;
+        return $this;
+    }
+
+    /**
+     * Refreshes table schema, which was marked by [[requireTableSchemaRefresh()]]
+     * @since 2.0.6
+     */
+    protected function refreshTableSchema()
+    {
+        if ($this->_refreshTableName !== null) {
+            $this->db->getSchema()->refreshTableSchema($this->_refreshTableName);
+        }
     }
 }
