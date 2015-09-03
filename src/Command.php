@@ -85,6 +85,8 @@ class Command extends \yii\db\Command
      */
     public function setSql($sql)
     {
+        $refreshTableName = null;
+        
         $matches = null;
         if (preg_match("/^\s*DROP TABLE IF EXISTS (['\"]?([^\s\;]+)['\"]?);?\s*$/i", $sql, $matches)) {
             if ($this->db->getSchema()->getTableSchema($matches[2]) !== null) {
@@ -92,6 +94,7 @@ class Command extends \yii\db\Command
             } else {
                 $sql = 'select 1 from RDB$DATABASE;'; //Prevent Drop Table
             }
+            $refreshTableName = $matches[2];
         }
         
         if ($sql !== $this->_sql) {
@@ -99,7 +102,7 @@ class Command extends \yii\db\Command
             $this->_sql = $this->db->quoteSql($sql);
             $this->_pendingParams = [];
             $this->params = [];
-            $this->_refreshTableName = null;
+            $this->_refreshTableName = $refreshTableName;
         }
 
         return $this;

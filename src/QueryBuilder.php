@@ -172,7 +172,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
         foreach ($columns as $name => $value) {
             if ($value instanceof Expression) {
                 $columns[$name] = $this->convertExpression($value);
-            } elseif (in_array($columnSchemas[$name]->type, [Schema::TYPE_TEXT, Schema::TYPE_BINARY])) {
+            } elseif (isset($columnSchemas[$name]) && in_array($columnSchemas[$name]->type, [Schema::TYPE_TEXT, Schema::TYPE_BINARY])) {
                 $columns[$name] = [$value, 'blob'];
             }
         }
@@ -194,7 +194,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
         foreach ($columns as $name => $value) {
             if ($value instanceof Expression) {
                 $columns[$name] = $this->convertExpression($value);
-            } elseif (in_array($columnSchemas[$name]->type, [Schema::TYPE_TEXT, Schema::TYPE_BINARY])) {
+            } elseif (isset($columnSchemas[$name]) && in_array($columnSchemas[$name]->type, [Schema::TYPE_TEXT, Schema::TYPE_BINARY])) {
                 $columns[$name] = [$value, 'blob'];
             }
         }
