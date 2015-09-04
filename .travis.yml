@@ -39,11 +39,11 @@ before_install:
   - if [[ "$FB" == "2.5" ]]; then sudo sed /ENABLE_FIREBIRD_SERVER=/s/no/yes/ -i $FIREBIRD_SERVER_CONFIG; fi
   - if [[ "$FB" == "2.5" ]]; then cat $FIREBIRD_SERVER_CONFIG | grep ENABLE_FIREBIRD_SERVER; fi
   - sudo service firebird$FB-super start
-  - export URL_SVN_EXT=https://github.com/php/php-src/branches/PHP-$(phpenv version-name)/ext
-  - if [[ $(phpenv version-name) == "7.0" ]]; then export URL_SVN_EXT="https://github.com/php/php-src/branches/PHP-7.0.0/ext"; fi
-  - if [[ $(phpenv version-name) == "nightly" ]]; then export URL_SVN_EXT="https://github.com/php/php-src/trunk/ext"; fi
-  - svn checkout $URL_SVN_EXT php-ext -q
-  - (cd php-ext/pdo_firebird/; phpize && ./configure && make && sudo make install)
+  - export URL_SVN_EXT=https://github.com/php/php-src/branches/PHP-$(phpenv version-name)/ext/pdo_firebird
+  - if [[ $(phpenv version-name) == "7.0" ]]; then export URL_SVN_EXT="https://github.com/php/php-src/branches/PHP-7.0.0/ext/pdo_firebird"; fi
+  - if [[ $(phpenv version-name) == "nightly" ]]; then export URL_SVN_EXT="https://github.com/php/php-src/trunk/ext/pdo_firebird"; fi
+  - svn export $URL_SVN_EXT pdo_firebird -q
+  - (cd pdo_firebird/; phpize && ./configure && make && sudo make install)
 
 install:
   - echo "extension=pdo_firebird.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
