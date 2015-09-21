@@ -426,6 +426,39 @@ class Schema extends \yii\db\Schema
     }
 
     /**
+     * Returns all unique indexes for the given table.
+     * Each array element is of the following structure:
+     *
+     * ~~~
+     * [
+     *  'IndexName1' => ['col1' [, ...]],
+     *  'IndexName2' => ['col2' [, ...]],
+     * ]
+     * ~~~
+     *
+     * @param TableSchema $table the table metadata
+     * @return array all unique indexes for the given table.
+     * @since 2.0.4
+     */
+    public function findUniqueIndexes($table)
+    {
+        $query = '
+SELECT id.RDB$INDEX_NAME as index_name, ids.RDB$FIELD_NAME as column_name
+FROM RDB$INDICES id
+INNER JOIN RDB$INDEX_SEGMENTS ids ON ids.RDB$INDEX_NAME = id.RDB$INDEX_NAME
+WHERE id.RDB$UNIQUE_FLAG = 1
+AND   id.RDB$SYSTEM_FLAG = 0
+AND UPPER(id.RDB$RELATION_NAME) = UPPER(\'' . $table->name . '\')
+ORDER BY id.RDB$RELATION_NAME, id.RDB$INDEX_NAME, ids.RDB$FIELD_POSITION';
+        $result = [];
+        $command = $this->db->createCommand($query);
+        foreach ($command->queryAll() as $row) {
+            $result[strtolower(rtrim($row['index_name']))][] = strtolower(rtrim($row['column_name']));
+        }
+        return $result;
+    }
+
+    /**
      * Sets the isolation level of the current transaction.
      * @param string $level The transaction isolation level to use for this transaction.
      * This can be one of [[Transaction::READ_UNCOMMITTED]], [[Transaction::READ_COMMITTED]], [[Transaction::REPEATABLE_READ]]

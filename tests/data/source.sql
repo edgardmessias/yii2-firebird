@@ -461,3 +461,24 @@ BEGIN
     INSERT INTO bit_values (id, val) VALUES (1, 0);
     INSERT INTO bit_values (id, val) VALUES (2, 1);
 END;
+-- SQL
+/* unique indexes test */
+EXECUTE block AS
+BEGIN
+    IF (EXISTS(SELECT 1 FROM rdb$relations WHERE LOWER(rdb$relation_name) = 'unique_values')) THEN 
+        EXECUTE STATEMENT 'DROP TABLE unique_values;';
+END;
+-- SQL
+CREATE TABLE unique_values (
+  a INTEGER NOT NULL,
+  b INTEGER NOT NULL,
+  c INTEGER NOT NULL
+);
+-- SQL
+CREATE UNIQUE INDEX uniqueA ON unique_values (a);
+-- SQL
+CREATE UNIQUE INDEX uniqueB ON unique_values (b);
+-- SQL
+CREATE UNIQUE INDEX uniqueBC ON unique_values (b, c);
+-- SQL
+CREATE UNIQUE INDEX uniqueABC ON unique_values (a, b, c);

@@ -128,4 +128,34 @@ class SchemaTest extends \yiiunit\framework\db\SchemaTest
         $this->assertEquals(2, $schema->getLastInsertID($schema->getTableSchema('animal')->sequenceName));
         $this->assertEquals(2, $schema->getLastInsertID($schema->getTableSchema('profile')->sequenceName));
     }
+
+    public function testFindUniqueIndexes()
+    {
+        /* @var $schema Schema */
+        $schema = $this->getConnection()->schema;
+
+        /* Test single primary key */
+        $table = $schema->getTableSchema('order');
+        $uniqueIndexes = $schema->findUniqueIndexes($table);
+
+        $this->assertTrue(count($uniqueIndexes) == 1);
+        $this->assertEquals(['id'], reset($uniqueIndexes));
+
+        /* Test composer primary key */
+        $table = $schema->getTableSchema('order_item');
+        $uniqueIndexes = $schema->findUniqueIndexes($table);
+
+        $this->assertTrue(count($uniqueIndexes) == 1);
+        $this->assertEquals(['order_id', 'item_id'], reset($uniqueIndexes));
+
+        /* Test without primary key */
+        $table = $schema->getTableSchema('unique_values');
+        $uniqueIndexes = $schema->findUniqueIndexes($table);
+
+        $this->assertTrue(count($uniqueIndexes) == 4);
+        $this->assertEquals(['a'], $uniqueIndexes['uniquea']);
+        $this->assertEquals(['b'], $uniqueIndexes['uniqueb']);
+        $this->assertEquals(['b', 'c'], $uniqueIndexes['uniquebc']);
+        $this->assertEquals(['a', 'b', 'c'], $uniqueIndexes['uniqueabc']);
+    }
 }
