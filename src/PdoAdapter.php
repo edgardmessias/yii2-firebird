@@ -37,11 +37,17 @@ class PdoAdapter extends PDO
         $dsn = str_replace("\\", "/", $dsn);
         // apply error mode
         $driver_options[PDO::ATTR_ERRMODE] = PDO::ERRMODE_EXCEPTION;
-        // lower case column names in results are necessary for Yii ActiveRecord proper functioning
-        $driver_options[PDO::ATTR_CASE] = PDO::CASE_LOWER;
         // ensure we only receive fieldname not tablename.fieldname.
         $driver_options[PDO::ATTR_FETCH_TABLE_NAMES] = false;
+        $driver_options[PDO::ATTR_STATEMENT_CLASS] = ['\edgardmessias\db\firebird\PdoStatementAdapter'];
         parent::__construct($dsn, $username, $password, $driver_options);
+    }
+    
+    public function prepare($statement, $driver_options = [])
+    {
+        $prepare = parent::prepare($statement, $driver_options);
+        $prepare->pdo = $this;
+        return $prepare;
     }
 
     /**

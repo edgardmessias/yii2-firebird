@@ -22,9 +22,4 @@ class ActiveRecordTest extends \yiiunit\framework\db\ActiveRecordTest
         $this->assertEquals(3, $customer->id);
         $this->assertEquals(4, $customer->status2);
     }
-
-    public function testPopulateWithoutPk()
-    {
-        $this->markTestSkipped();
-    }
 }

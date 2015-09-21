@@ -142,6 +142,21 @@ class Schema extends \yii\db\Schema
         }
     }
 
+    protected function fixColumnName($column)
+    {
+        $column = rtrim($column);
+        $currentCase = $this->db->slavePdo->getAttribute(\PDO::ATTR_CASE);
+        
+        if ($currentCase === \PDO::CASE_NATURAL && preg_match("/^[A-Z0-9\-\_]+$/", $column)) {
+            return strtolower($column);
+        } elseif ($currentCase === \PDO::CASE_LOWER) {
+            return strtolower($column);
+        } elseif ($currentCase === \PDO::CASE_UPPER) {
+            return strtoupper($column);
+        }
+        return $column;
+    }
+
     /**
      * Collects the table column metadata.
      *
@@ -168,9 +183,13 @@ class Schema extends \yii\db\Schema
                         AND UPPER(RDB$RELATION_NAME)=UPPER(\'' . $table->name . '\')
                         AND RDB$TRIGGER_TYPE = 1
                         AND RDB$TRIGGER_INACTIVE = 0
-                        AND (UPPER(REPLACE(RDB$TRIGGER_SOURCE,\' \',\'\')) LIKE \'%NEW.\'||TRIM(rel.rdb$field_name)||\'=GEN_ID%\'
-                            OR UPPER(REPLACE(RDB$TRIGGER_SOURCE,\' \',\'\')) LIKE \'%NEW.\'||TRIM(rel.rdb$field_name)||\'=NEXTVALUEFOR%\'))
-                    AS fautoinc
+                        AND (
+                                  UPPER(REPLACE(RDB$TRIGGER_SOURCE,\' \',\'\')) LIKE \'%NEW.\'||TRIM(rel.rdb$field_name)||\'=GEN_ID%\'
+                               OR UPPER(REPLACE(RDB$TRIGGER_SOURCE,\' \',\'\')) LIKE \'%NEW.\'||TRIM(rel.rdb$field_name)||\'=NEXTVALUEFOR%\'
+                               OR UPPER(REPLACE(RDB$TRIGGER_SOURCE,\' \',\'\')) LIKE \'%NEW."\'||TRIM(rel.rdb$field_name)||\'"=GEN_ID%\'
+                               OR UPPER(REPLACE(RDB$TRIGGER_SOURCE,\' \',\'\')) LIKE \'%NEW."\'||TRIM(rel.rdb$field_name)||\'"=NEXTVALUEFOR%\'
+                            )
+                    ) AS fautoinc
                 FROM
                     rdb$relation_fields rel
                     JOIN rdb$fields fld ON rel.rdb$field_source=fld.rdb$field_name
@@ -199,18 +218,21 @@ class Schema extends \yii\db\Schema
             return false;
         }
         $pkeys = array_map("rtrim", $pkeys);
-        $pkeys = array_map("strtolower", $pkeys);
+        $pkeys = array_map([$this, 'fixColumnName'], $pkeys);
         foreach ($columns as $key => $column) {
-            $column = array_map("strtolower", $column);
-            $columns[$key]['fprimary'] = in_array(rtrim($column['fname']), $pkeys);
+            $columns[$key] = array_change_key_case($columns[$key], CASE_UPPER);
+            
+            $columns[$key]['FNAME'] = $this->fixColumnName($columns[$key]['FNAME']);
+            
+            $columns[$key]['FPRIMARY'] = in_array(rtrim($columns[$key]['FNAME']), $pkeys);
         }
         foreach ($columns as $column) {
             $c = $this->loadColumnSchema($column);
             if ($table->sequenceName === null && $c->autoIncrement) {
                 $matches = [];
-                if (preg_match("/NEW.{$c->name}\s*=\s*GEN_ID\((\w+)/i", $column['fautoinc'], $matches)) {
+                if (preg_match("/NEW.\"?{$c->name}\"?\s*=\s*GEN_ID\((\w+)/i", $column['FAUTOINC'], $matches)) {
                     $table->sequenceName = $matches[1];
-                } elseif (preg_match("/NEW.{$c->name}\s*=\s*NEXT\s+VALUE\s+FOR\s+(\w+)/i", $column['fautoinc'], $matches)) {
+                } elseif (preg_match("/NEW.\"?{$c->name}\"?\s*=\s*NEXT\s+VALUE\s+FOR\s+(\w+)/i", $column['FAUTOINC'], $matches)) {
                     $table->sequenceName = $matches[1];
                 }
             }
@@ -240,24 +262,24 @@ class Schema extends \yii\db\Schema
     protected function loadColumnSchema($column)
     {
         $c = $this->createColumnSchema();
-        $c->name = strtolower(rtrim($column['fname']));
-        $c->allowNull = $column['fnull'] !== '1';
-        $c->isPrimaryKey = $column['fprimary'];
-        $c->autoIncrement = (boolean)$column['fautoinc'];
+        $c->name = rtrim($column['FNAME']);
+        $c->allowNull = $column['FNULL'] !== '1';
+        $c->isPrimaryKey = $column['FPRIMARY'];
+        $c->autoIncrement = (boolean) $column['FAUTOINC'];
 
         $c->type = self::TYPE_STRING;
 
         $defaultValue = null;
-        if (!empty($column['fdefault'])) {
+        if (!empty($column['FDEFAULT'])) {
             // remove whitespace, 'DEFAULT ' prefix and surrounding single quotes; all optional
-            if (preg_match("/\s*(DEFAULT\s+){0,1}('(.*)'|(.*))\s*/i", $column['fdefault'], $parts)) {
+            if (preg_match("/\s*(DEFAULT\s+){0,1}('(.*)'|(.*))\s*/i", $column['FDEFAULT'], $parts)) {
                 $defaultValue = array_pop($parts);
             }
             // handle escaped single quotes like in "funny''quoted''string"
             $defaultValue = str_replace('\'\'', '\'', $defaultValue);
         }
         if ($defaultValue === null) {
-            $defaultValue = $column['fdefault_value'];
+            $defaultValue = $column['FDEFAULT_VALUE'];
         }
         $dbType = "";
         $baseTypes = [
@@ -280,43 +302,43 @@ class Schema extends \yii\db\Schema
             37 => 'VARCHAR',
             14 => 'CHAR',
         ];
-        if (array_key_exists((int) $column['fcodtype'], $baseTypes)) {
-            $dbType = $baseTypes[(int) $column['fcodtype']];
-        } elseif (array_key_exists((int) $column['fcodtype'], $baseCharTypes)) {
-            $c->size = (int) $column['fcharlength'];
+        if (array_key_exists((int) $column['FCODTYPE'], $baseTypes)) {
+            $dbType = $baseTypes[(int) $column['FCODTYPE']];
+        } elseif (array_key_exists((int) $column['FCODTYPE'], $baseCharTypes)) {
+            $c->size = (int) $column['FCHARLENGTH'];
             $c->precision = $c->size;
-            $dbType = $baseCharTypes[(int) $column['fcodtype']] . "($c->size)";
+            $dbType = $baseCharTypes[(int) $column['FCODTYPE']] . "($c->size)";
         }
-        switch ((int) $column['fcodtype']) {
+        switch ((int) $column['FCODTYPE']) {
             case 7:
             case 8:
-                switch ((int) $column['fcodsubtype']) {
+                switch ((int) $column['FCODSUBTYPE']) {
                     case 1:
-                        $c->precision = (int) $column['fprecision'];
+                        $c->precision = (int) $column['FPRECISION'];
                         $c->size = $c->precision;
-                        $c->scale = abs((int) $column['fscale']);
+                        $c->scale = abs((int) $column['FSCALE']);
                         $dbType = "NUMERIC({$c->precision},{$c->scale})";
                         break;
                     case 2:
-                        $c->precision = (int) $column['fprecision'];
+                        $c->precision = (int) $column['FPRECISION'];
                         $c->size = $c->precision;
-                        $c->scale = abs((int) $column['fscale']);
+                        $c->scale = abs((int) $column['FSCALE']);
                         $dbType = "DECIMAL({$c->precision},{$c->scale})";
                         break;
                 }
                 break;
             case 16:
-                switch ((int) $column['fcodsubtype']) {
+                switch ((int) $column['FCODSUBTYPE']) {
                     case 1:
-                        $c->precision = (int) $column['fprecision'];
+                        $c->precision = (int) $column['FPRECISION'];
                         $c->size = $c->precision;
-                        $c->scale = abs((int) $column['fscale']);
+                        $c->scale = abs((int) $column['FSCALE']);
                         $dbType = "NUMERIC({$c->precision},{$c->scale})";
                         break;
                     case 2:
-                        $c->precision = (int) $column['fprecision'];
+                        $c->precision = (int) $column['FPRECISION'];
                         $c->size = $c->precision;
-                        $c->scale = abs((int) $column['fscale']);
+                        $c->scale = abs((int) $column['FSCALE']);
                         $dbType = "DECIMAL({$c->precision},{$c->scale})";
                         break;
                     default :
@@ -325,7 +347,7 @@ class Schema extends \yii\db\Schema
                 }
                 break;
             case 261:
-                switch ((int) $column['fcodsubtype']) {
+                switch ((int) $column['FCODSUBTYPE']) {
                     case 1:
                         $dbType = 'BLOB SUB_TYPE TEXT';
                         $c->size = null;
@@ -349,8 +371,7 @@ class Schema extends \yii\db\Schema
 
         $c->defaultValue = null;
         if ($defaultValue !== null) {
-            if (in_array($c->type, [self::TYPE_DATE, self::TYPE_DATETIME, self::TYPE_TIME, self::TYPE_TIMESTAMP])
-                    && preg_match('/(CURRENT_|NOW|NULL|TODAY|TOMORROW|YESTERDAY)/i', $defaultValue)) {
+            if (in_array($c->type, [self::TYPE_DATE, self::TYPE_DATETIME, self::TYPE_TIME, self::TYPE_TIMESTAMP]) && preg_match('/(CURRENT_|NOW|NULL|TODAY|TOMORROW|YESTERDAY)/i', $defaultValue)) {
                 $c->defaultValue = new \yii\db\Expression(trim($defaultValue));
             } else {
                 $c->defaultValue = $c->phpTypecast($defaultValue);
@@ -390,17 +411,19 @@ class Schema extends \yii\db\Schema
 
         $constraints = [];
         foreach ($fkeys as $fkey) {
+            $fkey = array_change_key_case($fkey, CASE_UPPER);
             // Zoggo - Added strtolower here to guarantee that values are
             // returned lower case. Otherwise gii generates wrong code.
             $fkey = array_map("rtrim", $fkey);
-            $fkey = array_map("strtolower", $fkey);
+            $fkey['FFIELD'] = $this->fixColumnName($fkey['FFIELD']);
+            $fkey['PFIELD'] = $this->fixColumnName($fkey['PFIELD']);
 
-            if (!isset($constraints[$fkey['fconstraint']])) {
-                $constraints[$fkey['fconstraint']] = [
-                    $fkey['ftable']
+            if (!isset($constraints[$fkey['FCONSTRAINT']])) {
+                $constraints[$fkey['FCONSTRAINT']] = [
+                    strtolower($fkey['FTABLE'])
                 ];
             }
-            $constraints[$fkey['fconstraint']][$fkey['ffield']] = $fkey['pfield'];
+            $constraints[$fkey['FCONSTRAINT']][$fkey['FFIELD']] = $fkey['PFIELD'];
         }
         $table->foreignKeys = array_values($constraints);
     }
@@ -453,7 +476,7 @@ ORDER BY id.RDB$RELATION_NAME, id.RDB$INDEX_NAME, ids.RDB$FIELD_POSITION';
         $result = [];
         $command = $this->db->createCommand($query);
         foreach ($command->queryAll() as $row) {
-            $result[strtolower(rtrim($row['index_name']))][] = strtolower(rtrim($row['column_name']));
+            $result[strtolower(rtrim($row['index_name']))][] = $this->fixColumnName($row['column_name']);
         }
         return $result;
     }
@@ -490,7 +513,7 @@ ORDER BY id.RDB$RELATION_NAME, id.RDB$INDEX_NAME, ids.RDB$FIELD_POSITION';
         $returnColumns = $this->getTableSchema($table)->primaryKey;
         if (!empty($returnColumns)) {
             $returning = [];
-            foreach ((array)$returnColumns as $name) {
+            foreach ((array) $returnColumns as $name) {
                 $returning[] = $this->quoteColumnName($name);
             }
             $sql .= ' RETURNING ' . implode(', ', $returning);
@@ -504,7 +527,7 @@ ORDER BY id.RDB$RELATION_NAME, id.RDB$INDEX_NAME, ids.RDB$FIELD_POSITION';
             return false;
         } else {
             if (!empty($returnColumns)) {
-                foreach ((array)$returnColumns as $name) {
+                foreach ((array) $returnColumns as $name) {
                     if ($this->getTableSchema($table)->getColumn($name)->autoIncrement) {
                         $this->_lastInsertID = $result[$name];
                         break;
@@ -523,9 +546,9 @@ ORDER BY id.RDB$RELATION_NAME, id.RDB$INDEX_NAME, ids.RDB$FIELD_POSITION';
         if (!$this->db->isActive) {
             throw new InvalidCallException('DB Connection is not active.');
         }
-        
+
         if ($sequenceName !== '') {
-            return $this->db->createCommand('SELECT GEN_ID('. $this->db->quoteTableName($sequenceName) .  ', 0 ) FROM RDB$DATABASE;')->queryScalar();
+            return $this->db->createCommand('SELECT GEN_ID(' . $this->db->quoteTableName($sequenceName) . ', 0 ) FROM RDB$DATABASE;')->queryScalar();
         }
 
         if ($this->_lastInsertID !== false) {

@@ -57,6 +57,8 @@ class QueryBuilder extends \yii\db\QueryBuilder
                     $alias = $matches[2] != '*' ? $matches[2] : 'ALL';
 
                     $columns[$i] = "{$column} AS {$function}_{$alias}";
+                } else {
+                    $columns[$i] = preg_replace("/(.*[aA][sS]\s+)[\{\[]{2}(\w+)[\}\]]{2}$/", '$1"$2"', $column);
                 }
             }
         }
@@ -339,10 +341,10 @@ class QueryBuilder extends \yii\db\QueryBuilder
     {
         $tableSchema = $this->db->getTableSchema($table);
         if ($tableSchema === null) {
-            throw new InvalidParamException("Table not found: $table");
+            throw new \yii\base\InvalidParamException("Table not found: $table");
         }
         if ($tableSchema->sequenceName === null) {
-            throw new InvalidParamException("There is not sequence associated with table '$table'.");
+            throw new \yii\base\InvalidParamException("There is not sequence associated with table '$table'.");
         }
 
         if ($value !== null) {
