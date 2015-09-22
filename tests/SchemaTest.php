@@ -17,19 +17,31 @@ class SchemaTest extends \yiiunit\framework\db\SchemaTest
 
     public $driverName = 'firebird';
 
-    public function testGetTableNames()
+    public function testView()
     {
         /* @var $schema Schema */
         $schema = $this->getConnection()->schema;
-        $tables = $schema->getTableNames();
-        $this->assertTrue(in_array('customer', $tables));
-        $this->assertTrue(in_array('category', $tables));
-        $this->assertTrue(in_array('item', $tables));
-        $this->assertTrue(in_array('order', $tables));
-        $this->assertTrue(in_array('order_item', $tables));
-        $this->assertTrue(in_array('type', $tables));
-        $this->assertTrue(in_array('animal', $tables));
-//        $this->assertTrue(in_array('animal_view', $tables));
+        
+        $table = $schema->getTableSchema('animal_view');
+        
+        $this->assertNotNull($table);
+        $this->assertCount(2, $table->columnNames);
+
+        //ID Column
+        $this->assertTrue(isset($table->columns['id']));
+        $this->assertEquals('integer', $table->columns['id']->type);
+        $this->assertEquals('integer', $table->columns['id']->dbType);
+        $this->assertEquals('integer', $table->columns['id']->phpType);
+        $this->assertEquals(null, $table->columns['id']->size);
+        $this->assertEquals(null, $table->columns['id']->precision);
+
+        //Type Column
+        $this->assertTrue(isset($table->columns['type']));
+        $this->assertEquals('string', $table->columns['type']->type);
+        $this->assertEquals('varchar(255)', $table->columns['type']->dbType);
+        $this->assertEquals('string', $table->columns['type']->phpType);
+        $this->assertEquals(255, $table->columns['type']->size);
+        $this->assertEquals(255, $table->columns['type']->precision);
     }
 
     public function testSingleFk()
