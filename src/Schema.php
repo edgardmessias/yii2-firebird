@@ -435,16 +435,16 @@ class Schema extends \yii\db\Schema
                 FROM
                     rdb$relations
                 WHERE
-                    (rdb$view_blr is null) AND
                     (rdb$system_flag is null OR rdb$system_flag=0)';
         try {
             $tables = $this->db->createCommand($sql)->queryColumn();
         } catch (Exception $e) {
             return false;
         }
-        foreach ($tables as $key => $table) {
-            $tables[$key] = strtolower(rtrim($table));
-        }
+
+        $tables = array_map('rtrim', $tables);
+        $tables = array_map('strtolower', $tables);
+
         return $tables;
     }
 
