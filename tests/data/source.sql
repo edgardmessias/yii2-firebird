@@ -428,6 +428,50 @@ BEGIN
     INSERT INTO document (title, content, version) VALUES ('Yii 2.0 guide', 'This is Yii 2.0 guide', 0);
 END;
 -- SQL
+/* Database Schema for validator tests */
+EXECUTE block AS
+BEGIN
+    IF (EXISTS(SELECT 1 FROM rdb$relations WHERE LOWER(rdb$relation_name) = 'validator_main')) THEN 
+        EXECUTE STATEMENT 'DROP TABLE validator_main;';
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
+    IF (EXISTS(SELECT 1 FROM rdb$relations WHERE LOWER(rdb$relation_name) = 'validator_ref')) THEN 
+        EXECUTE STATEMENT 'DROP TABLE validator_ref;';
+END;
+-- SQL
+CREATE TABLE validator_main (
+  id INTEGER NOT NULL,
+  field1 VARCHAR(255),
+  PRIMARY KEY (id)
+);
+-- SQL
+CREATE TABLE validator_ref (
+  id INTEGER NOT NULL,
+  a_field VARCHAR(255),
+  ref     integer,
+  PRIMARY KEY (id)
+);
+-- SQL
+EXECUTE block AS
+BEGIN
+    INSERT INTO validator_main (id, field1) VALUES (1, 'just a string1');
+    INSERT INTO validator_main (id, field1) VALUES (2, 'just a string2');
+    INSERT INTO validator_main (id, field1) VALUES (3, 'just a string3');
+    INSERT INTO validator_main (id, field1) VALUES (4, 'just a string4');
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
+    INSERT INTO validator_ref (id, a_field, ref) VALUES (1, 'ref_to_2', 2);
+    INSERT INTO validator_ref (id, a_field, ref) VALUES (2, 'ref_to_2', 2);
+    INSERT INTO validator_ref (id, a_field, ref) VALUES (3, 'ref_to_3', 3);
+    INSERT INTO validator_ref (id, a_field, ref) VALUES (4, 'ref_to_4', 4);
+    INSERT INTO validator_ref (id, a_field, ref) VALUES (5, 'ref_to_4', 4);
+    INSERT INTO validator_ref (id, a_field, ref) VALUES (6, 'ref_to_5', 5);
+END;
+-- SQL
 /* bit test, see https://github.com/yiisoft/yii2/issues/9006 */
 EXECUTE block AS
 BEGIN
