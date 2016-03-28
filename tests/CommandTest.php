@@ -2,6 +2,8 @@
 
 namespace edgardmessias\unit\db\firebird;
 
+use yii\db\Expression;
+
 /**
  * @group firebird
  */
@@ -118,6 +120,33 @@ SQL;
         $this->assertEquals('user5@example.com', $command->queryScalar());
     }
 
+    public function testInsertExpression()
+    {
+        $db = $this->getConnection();
+        $db->createCommand('DELETE FROM {{order_with_null_fk}}')->execute();
+
+        $expression = "EXTRACT(YEAR FROM TIMESTAMP 'now')";
+
+        $command = $db->createCommand();
+        $command->insert(
+            '{{order_with_null_fk}}',
+            [
+                'created_at' => new Expression($expression),
+                'total' => 1,
+            ]
+        )->execute();
+        $this->assertEquals(1, $db->createCommand('SELECT COUNT(*) FROM {{order_with_null_fk}}')->queryScalar());
+        $record = $db->createCommand('SELECT [[created_at]] FROM {{order_with_null_fk}}')->queryOne();
+        $this->assertEquals([
+            'created_at' => date('Y'),
+        ], $record);
+    }
+
+    public function testRenameTable()
+    {
+        $this->markTestSkipped('firebird does not support rename table');
+    }
+
     public function testLastInsertId()
     {
         $db = $this->getConnection();
@@ -127,4 +156,5 @@ SQL;
         $command->execute();
         $this->assertEquals(3, $db->getSchema()->getLastInsertID('gen_profile_id'));
     }
+
 }
