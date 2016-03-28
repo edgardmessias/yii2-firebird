@@ -19,7 +19,7 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
 
     /**
      * @throws \Exception
-     * @return QueryBuilder
+     * @return \edgardmessias\db\firebird\QueryBuilder
      */
     protected function getQueryBuilder()
     {
@@ -37,10 +37,7 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
      */
     protected function replaceQuotes($sql)
     {
-        if (!in_array($this->driverName, ['mssql', 'mysql', 'sqlite'])) {
-            return str_replace('`', '', $sql);
-        }
-        return $sql;
+        return str_replace(['[[', ']]'], '', $sql);
     }
 
     /**
@@ -119,13 +116,41 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
     {
         $conditions = parent::conditionProvider();
 
-        $conditions[46] = [ ['=', 'date', (new Query())->select('max(date)')->from('test')->where(['id' => 5])], 'date = (SELECT max(date) AS max_date FROM test WHERE id=:qp0)', [':qp0' => 5] ];
-        $conditions[49] = [ ['in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]], '((id = :qp0 AND name = :qp1) OR (id = :qp2 AND name = :qp3))', [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']];
-        $conditions[50] = [ ['not in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]], '((id != :qp0 OR name != :qp1) AND (id != :qp2 OR name != :qp3))', [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']];
+        $conditions[48] = [ ['=', 'date', (new Query())->select('max(date)')->from('test')->where(['id' => 5])], 'date = (SELECT max(date) AS max_date FROM test WHERE id=:qp0)', [':qp0' => 5] ];
+        $conditions[53] = [ ['in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]], '((id = :qp0 AND name = :qp1) OR (id = :qp2 AND name = :qp3))', [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']];
+        $conditions[54] = [ ['not in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]], '((id != :qp0 OR name != :qp1) AND (id != :qp2 OR name != :qp3))', [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']];
         
         return $conditions;
     }
     
+    /**
+     * This test contains three select queries connected with UNION and UNION ALL constructions.
+     * It could be useful to use "phpunit --group=db --filter testBuildUnion" command for run it.
+     */
+    public function testBuildUnion()
+    {
+        $expectedQuerySql = $this->replaceQuotes(
+            "SELECT [[id]] FROM [[TotalExample]] [[t1]] WHERE (w > 0) AND (x < 2) UNION SELECT [[id]] FROM [[TotalTotalExample]] [[t2]] WHERE w > 5 UNION ALL SELECT [[id]] FROM [[TotalTotalExample]] [[t3]] WHERE w = 3"
+        );
+        $query = new Query();
+        $secondQuery = new Query();
+        $secondQuery->select('id')
+              ->from('TotalTotalExample t2')
+              ->where('w > 5');
+        $thirdQuery = new Query();
+        $thirdQuery->select('id')
+              ->from('TotalTotalExample t3')
+              ->where('w = 3');
+        $query->select('id')
+              ->from('TotalExample t1')
+              ->where(['and', 'w > 0', 'x < 2'])
+              ->union($secondQuery)
+              ->union($thirdQuery, TRUE);
+        list($actualQuerySql, $queryParams) = $this->getQueryBuilder()->build($query);
+        $this->assertEquals($expectedQuerySql, $actualQuerySql);
+        $this->assertEquals([], $queryParams);
+    }
+
     public function testSelectSubquery()
     {
         $subquery = (new Query())

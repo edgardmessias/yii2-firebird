@@ -203,7 +203,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
                 list($unions[$i]['query'], $params) = $this->build($query, $params);
             }
 
-            $result .= 'UNION ' . ($union['all'] ? 'ALL ' : '') . ' ' . $unions[$i]['query'] . ' ';
+            $result .= 'UNION ' . ($union['all'] ? 'ALL ' : '') . $unions[$i]['query'] . ' ';
         }
 
         return trim($result);
