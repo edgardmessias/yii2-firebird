@@ -8,7 +8,9 @@
 
 namespace edgardmessias\db\firebird;
 
+use yii\base\InvalidParamException;
 use yii\db\Expression;
+use yii\db\Query;
 
 /**
  *
@@ -40,6 +42,56 @@ class QueryBuilder extends \yii\db\QueryBuilder
         Schema::TYPE_BOOLEAN   => 'smallint',
         Schema::TYPE_MONEY     => 'numeric(18,4)',
     ];
+
+    /**
+     * Generates a SELECT SQL statement from a [[Query]] object.
+     * @param Query $query the [[Query]] object from which the SQL statement will be generated.
+     * @param array $params the parameters to be bound to the generated SQL statement. These parameters will
+     * be included in the result with the additional parameters generated during the query building process.
+     * @return array the generated SQL statement (the first array element) and the corresponding
+     * parameters to be bound to the SQL statement (the second array element). The parameters returned
+     * include those provided in `$params`.
+     */
+    public function build($query, $params = [])
+    {
+        $query = $query->prepare($this);
+
+        $params = empty($params) ? $query->params : array_merge($params, $query->params);
+
+        $clauses = [
+            $this->buildSelect($query->select, $params, $query->distinct, $query->selectOption),
+            $this->buildFrom($query->from, $params),
+            $this->buildJoin($query->join, $params),
+            $this->buildWhere($query->where, $params),
+            $this->buildGroupBy($query->groupBy),
+            $this->buildHaving($query->having, $params),
+        ];
+
+        $sql = implode($this->separator, array_filter($clauses));
+        $sql = $this->buildOrderByAndLimit($sql, $query->orderBy, $query->limit, $query->offset);
+
+        if (!empty($query->orderBy)) {
+            foreach ($query->orderBy as $expression) {
+                if ($expression instanceof Expression) {
+                    $params = array_merge($params, $expression->params);
+                }
+            }
+        }
+        if (!empty($query->groupBy)) {
+            foreach ($query->groupBy as $expression) {
+                if ($expression instanceof Expression) {
+                    $params = array_merge($params, $expression->params);
+                }
+            }
+        }
+
+        $union = $this->buildUnion($query->union, $params);
+        if ($union !== '') {
+            $sql = "$sql{$this->separator}$union";
+        }
+
+        return [$sql, $params];
+    }
 
     /**
      * @inheritdoc
@@ -117,23 +169,44 @@ class QueryBuilder extends \yii\db\QueryBuilder
         // If we are ignoring $offset then return $limit rows.
         // ie, return the first $limit rows in the set.
         if ($offset < 0 && $limit >= 0) {
-            $rows = $limit;
-            $sql .= ' ROWS ' . (int) $rows;
+            $count = 1; //Only do it once
+            $sql = preg_replace('/^SELECT /i', 'SELECT FIRST ' . (int) $limit . ' ', $sql, $count);
             return $sql;
         }
         // Otherwise apply the params and return the amended sql.
         if ($offset >= 0 && $limit >= 0) {
-            // calculate $rows for ROWS...
-            $rows = $offset + 1;
-            $sql .= ' ROWS ' . (int) $rows;
-            // calculate $to for TO...
-            $to = $offset + $limit;
-            $sql .= ' TO ' . (int) $to;
+            $count = 1; //Only do it once
+            $sql = preg_replace('/^SELECT /i', 'SELECT FIRST ' . (int) $limit . ' SKIP ' . (int) $offset, $sql, $count);
             return $sql;
         }
         // If we have fallen through the cracks then just pass
         // the sql back.
         return $sql;
+    }
+
+    /**
+     * @param array $unions
+     * @param array $params the binding parameters to be populated
+     * @return string the UNION clause built from [[Query::$union]].
+     */
+    public function buildUnion($unions, &$params)
+    {
+        if (empty($unions)) {
+            return '';
+        }
+
+        $result = '';
+
+        foreach ($unions as $i => $union) {
+            $query = $union['query'];
+            if ($query instanceof Query) {
+                list($unions[$i]['query'], $params) = $this->build($query, $params);
+            }
+
+            $result .= 'UNION ' . ($union['all'] ? 'ALL ' : '') . ' ' . $unions[$i]['query'] . ' ';
+        }
+
+        return trim($result);
     }
 
     /**
