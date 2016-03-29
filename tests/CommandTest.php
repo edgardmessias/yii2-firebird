@@ -120,6 +120,10 @@ SQL;
         $this->assertEquals('user5@example.com', $command->queryScalar());
     }
 
+    /**
+     * Test whether param binding works in other places than WHERE
+     * @dataProvider paramsNonWhereProvider
+     */
     public function testBindParamsNonWhere($sql)
     {
         $this->markTestSkipped('firebird does not support parameter in function');
