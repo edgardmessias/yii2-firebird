@@ -123,6 +123,17 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         return $conditions;
     }
     
+    public function testAddDropPrimaryKey()
+    {
+        $tableName = 'constraints';
+
+        // Change field1 to not null
+        $qb = $this->getQueryBuilder();
+        $qb->db->createCommand()->alterColumn($tableName, 'field1', 'string(255) not null')->execute();
+        
+        parent::testAddDropPrimaryKey();
+    }
+
     /**
      * This test contains three select queries connected with UNION and UNION ALL constructions.
      * It could be useful to use "phpunit --group=db --filter testBuildUnion" command for run it.
@@ -162,7 +173,7 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
             ->from('accounts')
             ->addSelect(['operations_count' => $subquery]);
         list ($sql, $params) = $this->getQueryBuilder()->build($query);
-        $expected = $this->replaceQuotes('SELECT *, (SELECT COUNT(*) AS COUNT_ALL FROM `operations` WHERE account_id = accounts.id) AS `operations_count` FROM `accounts`');
+        $expected = $this->replaceQuotes('SELECT *, (SELECT COUNT(*) AS COUNT_ALL FROM [[operations]] WHERE account_id = accounts.id) AS [[operations_count]] FROM [[accounts]]');
         $this->assertEquals($expected, $sql);
         $this->assertEmpty($params);
     }

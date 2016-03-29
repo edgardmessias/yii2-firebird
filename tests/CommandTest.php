@@ -120,6 +120,11 @@ SQL;
         $this->assertEquals('user5@example.com', $command->queryScalar());
     }
 
+    public function testBindParamsNonWhere($sql)
+    {
+        $this->markTestSkipped('firebird does not support parameter in function');
+    }
+
     public function testInsertExpression()
     {
         $db = $this->getConnection();

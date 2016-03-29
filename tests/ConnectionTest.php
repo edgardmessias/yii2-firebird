@@ -12,6 +12,17 @@ class ConnectionTest extends \yiiunit\framework\db\ConnectionTest
 
     public $driverName = 'firebird';
 
+    public function testSerialize()
+    {
+        $connection = $this->getConnection(false, false);
+        $connection->open();
+        $serialized = serialize($connection);
+        $unserialized = unserialize($serialized);
+        $this->assertInstanceOf('yii\db\Connection', $unserialized);
+
+        $this->assertEquals(123, $unserialized->createCommand('SELECT 123 from RDB$DATABASE')->queryScalar());
+    }
+
     public function testQuoteValue()
     {
         $connection = $this->getConnection(false);
