@@ -2,6 +2,7 @@
 
 namespace edgardmessias\unit\db\firebird;
 
+use edgardmessias\db\firebird\Schema;
 use yii\db\Expression;
 
 /**
@@ -149,6 +150,60 @@ SQL;
         $this->assertEquals([
             'created_at' => date('Y'),
         ], $record);
+    }
+
+    public function testCreateTable()
+    {
+        $db = $this->getConnection();
+
+        if($db->getSchema()->getTableSchema('testCreateTable') !== null){
+            $db->createCommand()->dropTable('testCreateTable')->execute();
+            //Update metadata in connection
+            $db->close();
+            $db->open();
+        }
+
+        $db->createCommand()->createTable('testCreateTable', ['id' => Schema::TYPE_PK, 'bar' => Schema::TYPE_INTEGER])->execute();
+        //Update metadata in connection
+        $db->close();
+        $db->open();
+
+        $db->createCommand()->insert('testCreateTable', ['bar' => 1])->execute();
+        $records = $db->createCommand('SELECT [[id]], [[bar]] FROM {{testCreateTable}};')->queryAll();
+        $this->assertEquals([
+            ['id' => 1, 'bar' => 1],
+        ], $records);
+    }
+
+    public function testAlterTable()
+    {
+        $db = $this->getConnection();
+
+        if($db->getSchema()->getTableSchema('testAlterTable') !== null){
+            $db->createCommand()->dropTable('testAlterTable')->execute();
+            //Update metadata in connection
+            $db->close();
+            $db->open();
+        }
+
+        $db->createCommand()->createTable('testAlterTable', ['id' => Schema::TYPE_PK, 'bar' => Schema::TYPE_INTEGER])->execute();
+        //Update metadata in connection
+        $db->close();
+        $db->open();
+
+        $db->createCommand()->insert('testAlterTable', ['bar' => 1])->execute();
+
+        $db->createCommand()->alterColumn('testAlterTable', 'bar', Schema::TYPE_STRING)->execute();
+        //Update metadata in connection
+        $db->close();
+        $db->open();
+
+        $db->createCommand()->insert('testAlterTable', ['bar' => 'hello'])->execute();
+        $records = $db->createCommand('SELECT [[id]], [[bar]] FROM {{testAlterTable}};')->queryAll();
+        $this->assertEquals([
+            ['id' => 1, 'bar' => 1],
+            ['id' => 2, 'bar' => 'hello'],
+        ], $records);
     }
 
     public function testRenameTable()
