@@ -40,9 +40,8 @@ before_install:
   - if [[ "$FB" == "2.5" ]]; then cat $FIREBIRD_SERVER_CONFIG | grep ENABLE_FIREBIRD_SERVER; fi
   - sudo service firebird$FB-super start
   - export URL_SVN_EXT=https://github.com/php/php-src/branches/PHP-$(phpenv version-name)/ext/pdo_firebird
-  - if [[ $(phpenv version-name) == "7.0" ]]; then export URL_SVN_EXT="https://github.com/php/php-src/branches/PHP-7.0.0/ext/pdo_firebird"; fi
   - if [[ $(phpenv version-name) == "nightly" ]]; then export URL_SVN_EXT="https://github.com/php/php-src/trunk/ext/pdo_firebird"; fi
-  - svn export $URL_SVN_EXT pdo_firebird -q
+  - travis_retry svn export $URL_SVN_EXT pdo_firebird -q
   - (cd pdo_firebird/; phpize && ./configure && make && sudo make install)
 
 install:
