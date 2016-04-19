@@ -162,6 +162,7 @@ class Schema extends \yii\db\Schema
                     fld.rdb$field_scale AS fscale,
                     fld.rdb$field_precision AS fprecision,
                     rel.rdb$null_flag AS fnull,
+                    rel.rdb$description AS fcomment,
                     fld.rdb$default_value AS fdefault_value,
                     (SELECT RDB$TRIGGER_SOURCE FROM RDB$TRIGGERS
                         WHERE RDB$SYSTEM_FLAG = 0
@@ -244,6 +245,7 @@ class Schema extends \yii\db\Schema
         $c->allowNull = $column['fnull'] !== '1';
         $c->isPrimaryKey = $column['fprimary'];
         $c->autoIncrement = (boolean)$column['fautoinc'];
+        $c->comment = $column['fcomment'] === null ? '' : $column['fcomment'];
 
         $c->type = self::TYPE_STRING;
 
