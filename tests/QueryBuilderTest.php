@@ -330,4 +330,34 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         
         $this->assertEquals(4, (new Query())->from('autoincrement_table')->max('id', $this->getConnection(false)));
     }
+
+    public function testCommentColumn()
+    {
+        $qb = $this->getQueryBuilder();
+
+        $expected = $this->replaceQuotes("COMMENT ON COLUMN [[comment]].[[add_comment]] IS 'This is my column.'");
+        $sql = $qb->addCommentOnColumn('comment', 'add_comment', 'This is my column.');
+        $this->assertEquals($expected, $sql);
+
+        $expected = $this->replaceQuotes("COMMENT ON COLUMN [[comment]].[[replace_comment]] IS 'This is my column.'");
+        $sql = $qb->addCommentOnColumn('comment', 'replace_comment', 'This is my column.');
+        $this->assertEquals($expected, $sql);
+
+        $expected = $this->replaceQuotes("COMMENT ON COLUMN [[comment]].[[delete_comment]] IS NULL");
+        $sql = $qb->dropCommentFromColumn('comment', 'delete_comment');
+        $this->assertEquals($expected, $sql);
+    }
+
+    public function testCommentTable()
+    {
+        $qb = $this->getQueryBuilder();
+
+        $expected = $this->replaceQuotes("COMMENT ON TABLE [[comment]] IS 'This is my table.'");
+        $sql = $qb->addCommentOnTable('comment', 'This is my table.');
+        $this->assertEquals($expected, $sql);
+
+        $expected = $this->replaceQuotes("COMMENT ON TABLE [[comment]] IS NULL");
+        $sql = $qb->dropCommentFromTable('comment');
+        $this->assertEquals($expected, $sql);
+    }
 }
