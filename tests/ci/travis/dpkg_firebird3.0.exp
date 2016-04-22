@@ -1,0 +1,11 @@
+#!/usr/bin/expect
+
+spawn sudo make install
+expect "Press Enter to start installation or ^C to abort"
+send "\r"
+
+expect "Please enter new password for SYSDBA user:"
+send "masterkey\r"
+
+# done
+expect eof

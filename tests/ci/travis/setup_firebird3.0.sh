@@ -1,17 +1,25 @@
 #!/bin/bash -e
 
-echo " ... Adding repository"
-echo "deb http://ppa.launchpad.net/mapopa/firebird3.0/ubuntu precise main" >> /etc/apt/sources.list.d/firebird3.0.list
-echo "deb-src http://ppa.launchpad.net/mapopa/firebird3.0/ubuntu precise main" >> /etc/apt/sources.list.d/firebird3.0.list
+echo " ... Downloading source"
+wget https://sourceforge.net/projects/firebird/files/firebird/3.0-Release/Firebird-3.0.0.32483-0.tar.bz2
 
-echo " ... Importing Key"
-apt-key adv --recv-keys --keyserver keyserver.ubuntu.com ea316a2f8d6bd55554c23f680be6d09eef648708
+echo " ... Extracting source"
+tar xjvf Firebird-3.0.0.32483-0.tar.bz2
 
-echo " ... Updating repository"
-apt-get update -qq
+echo " ... Preparing source"
+cd Firebird-3.0.0.32483-0
+apt-get install -qq expect docbook docbook-to-man libatomic-ops-dev libbsd-dev libedit-dev libsp1c2 sgml-data sp libtommath-dev
+./configure
 
-echo " ... Installing Firebird 3.0"
-apt-get install -qq firebird3.0-server
+echo " ... Compiling source"
+make -j `nproc`
+
+echo " ... Installing"
+export DEBIAN_FRONTEND=readline
+expect ${TRAVIS_BUILD_DIR}/tests/ci/travis/dpkg_firebird3.0.exp
+export DEBIAN_FRONTEND=dialog
+
+ln -s /usr/local/firebird/bin/isql /usr/local/firebird/bin/isql-fb
 
 echo " ... Starting Firebird 3.0"
-service firebird3.0-server start
+service firebird start

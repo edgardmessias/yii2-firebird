@@ -33,6 +33,7 @@ before_install:
   - sudo apt-get update -qq 
   - sudo chmod +x tests/ci/travis/*
   - sudo tests/ci/travis/setup_firebird${FB}.sh
+  - export PATH=$PATH:/usr/local/firebird/bin
 
   # initialize databases
   - echo "CREATE DATABASE 'localhost:/tmp/TEST.FDB' USER 'SYSDBA' PASSWORD 'masterkey' PAGE_SIZE 16384 DEFAULT CHARACTER SET UTF8;" > /tmp/create_test.sql
@@ -40,10 +41,10 @@ before_install:
   - cat /tmp/create_test.sql
 
   #build pdo_firebird
-  - export URL_SVN_EXT=https://github.com/php/php-src/branches/PHP-$(phpenv version-name)/ext/pdo_firebird
-  - if [[ $(phpenv version-name) == "nightly" ]]; then export URL_SVN_EXT="https://github.com/php/php-src/trunk/ext/pdo_firebird"; fi
-  - travis_retry svn export $URL_SVN_EXT pdo_firebird -q
-  - (cd pdo_firebird/; phpize && ./configure && make && sudo make install)
+  - export BRANCH=PHP-$(phpenv version-name)
+  - if [[ $(phpenv version-name) == "nightly" ]]; then export BRANCH=master; fi
+  - travis_retry git clone --depth=1 -b ${BRANCH} --single-branch https://github.com/php/php-src.git
+  - (cd php-src/ext/pdo_firebird/; phpize && ./configure && make && sudo make install)
 
 install:
   - echo "extension=pdo_firebird.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
