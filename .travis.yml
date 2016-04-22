@@ -38,10 +38,17 @@ before_install:
   - if [[ "$FB" == "2.5" ]]; then sudo sed /ENABLE_FIREBIRD_SERVER=/s/no/yes/ -i $FIREBIRD_SERVER_CONFIG; fi
   - if [[ "$FB" == "2.5" ]]; then cat $FIREBIRD_SERVER_CONFIG | grep ENABLE_FIREBIRD_SERVER; fi
   - sudo service firebird$FB-super start
-  - export URL_SVN_EXT=https://github.com/php/php-src/branches/PHP-$(phpenv version-name)/ext/pdo_firebird
-  - if [[ $(phpenv version-name) == "nightly" ]]; then export URL_SVN_EXT="https://github.com/php/php-src/trunk/ext/pdo_firebird"; fi
-  - travis_retry svn export $URL_SVN_EXT pdo_firebird -q
-  - (cd pdo_firebird/; phpize && ./configure && make && sudo make install)
+
+  # initialize databases
+  - echo "CREATE DATABASE 'localhost:/tmp/TEST.FDB' USER 'SYSDBA' PASSWORD 'masterkey' PAGE_SIZE 16384 DEFAULT CHARACTER SET UTF8;" > /tmp/create_test.sql
+  - isql-fb -i /tmp/create_test.sql
+  - cat /tmp/create_test.sql
+
+  #build pdo_firebird
+  - export BRANCH=PHP-$(phpenv version-name)
+  - if [[ $(phpenv version-name) == "nightly" ]]; then export BRANCH=master; fi
+  - travis_retry git clone --depth=1 -b ${BRANCH} --single-branch https://github.com/php/php-src.git
+  - (cd php-src/ext/pdo_firebird/; phpize && ./configure && make && sudo make install)
 
 install:
   - echo "extension=pdo_firebird.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
@@ -55,10 +62,6 @@ install:
 before_script:
   # show some versions and env information
   - isql-fb -z -q -i /dev/null
-  # initialize databases
-  - echo "CREATE DATABASE 'localhost:/tmp/TEST.FDB' USER 'SYSDBA' PASSWORD 'masterkey' PAGE_SIZE 16384 DEFAULT CHARACTER SET UTF8;" > /tmp/create_test.sql
-  - isql-fb -i /tmp/create_test.sql
-  - cat /tmp/create_test.sql
 
 script:
   - phpunit
