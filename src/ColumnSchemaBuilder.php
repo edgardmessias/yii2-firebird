@@ -21,13 +21,12 @@ class ColumnSchemaBuilder extends \yii\db\ColumnSchemaBuilder
      */
     public function __toString()
     {
-        switch ($this->getTypeCategory()) {
-            case self::CATEGORY_PK:
-                $format = '{type}{length}{check}';
-                break;
-            default:
-                $format = '{type}{length}{default}{notnull}{unique}{check}';
-        }
-        return $this->buildCompleteString($format);
+        return
+            $this->type .
+            $this->buildLengthString() .
+            $this->buildDefaultString() .
+            $this->buildNotNullString() .
+            $this->buildUniqueString() .
+            $this->buildCheckString();
     }
 }

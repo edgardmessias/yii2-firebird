@@ -50,7 +50,7 @@ class Schema extends \yii\db\Schema
      */
     public $typeMap = [
         'bigint'             => self::TYPE_BIGINT,
-        'char'               => self::TYPE_CHAR,
+        'char'               => self::TYPE_STRING,
         'varchar'            => self::TYPE_STRING,
         'timestamp'          => self::TYPE_TIMESTAMP,
         'decimal'            => self::TYPE_DECIMAL,
