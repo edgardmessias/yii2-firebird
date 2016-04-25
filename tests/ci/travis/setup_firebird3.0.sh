@@ -1,15 +1,12 @@
 #!/bin/bash -e
 
 echo " ... Downloading source"
-wget https://sourceforge.net/projects/firebird/files/firebird/3.0-Release/Firebird-3.0.0.32483-0.tar.bz2
-
-echo " ... Extracting source"
-tar xjvf Firebird-3.0.0.32483-0.tar.bz2
+git clone --depth=1 -b B3_0_Release --single-branch https://github.com/FirebirdSQL/firebird.git
 
 echo " ... Preparing source"
-cd Firebird-3.0.0.32483-0
+cd firebird
 apt-get install -qq expect docbook docbook-to-man libatomic-ops-dev libbsd-dev libedit-dev libsp1c2 sgml-data sp libtommath-dev
-./configure
+./autogen.sh
 
 echo " ... Compiling source"
 make -j `nproc`
