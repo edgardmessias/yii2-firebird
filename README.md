@@ -1,12 +1,10 @@
 Firebird Extension for Yii 2
 ==========================
 
-This branch use last stable version of Yii2
-
 This extension adds [Firebird](http://www.firebirdsql.org/) database engine extension for the [Yii framework 2.0](http://www.yiiframework.com).
 
 [![Yii2](https://img.shields.io/badge/Powered_by-Yii_Framework-green.svg?style=flat)](http://www.yiiframework.com/)
-[![Build Status](https://travis-ci.org/edgardmessias/yii2-firebird.svg?branch=yii2-stable)](https://travis-ci.org/edgardmessias/yii2-firebird)
+[![Build Status](https://travis-ci.org/edgardmessias/yii2-firebird.svg?branch=master)](https://travis-ci.org/edgardmessias/yii2-firebird)
 [![Dependency Status](https://www.versioneye.com/php/edgardmessias:yii2-firebird/dev-master/badge.png)](https://www.versioneye.com/php/edgardmessias:yii2-firebird/dev-master)
 [![Reference Status](https://www.versioneye.com/php/edgardmessias:yii2-firebird/reference_badge.svg)](https://www.versioneye.com/php/edgardmessias:yii2-firebird/references)
 
