@@ -31,7 +31,9 @@ cache:
 before_install:
   - sudo sh -c "echo 'precedence ::ffff:0:0/96 100' >> /etc/gai.conf"
   - sudo apt-get update -qq 
-  - sudo chmod +x tests/ci/travis/*
+  
+  #installing and starting Firebird Server
+  - sudo chmod +x tests/ci/travis/*.sh
   - sudo tests/ci/travis/setup_firebird${FB}.sh
   - export PATH=$PATH:/usr/local/firebird/bin
 
@@ -47,13 +49,18 @@ before_install:
   - (cd php-src/ext/pdo_firebird/; phpize && ./configure && make && sudo make install)
 
 install:
+  #enabling pdo_firebird
   - echo "extension=pdo_firebird.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+  - php -m | grep -i pdo
 
+  #preparing Yii2 environment
   - travis_retry composer self-update && composer --version
   - travis_retry composer global require "fxp/composer-asset-plugin:~1.1.3" --prefer-dist --no-interaction
   - export PATH="$HOME/.composer/vendor/bin:$PATH"
 
+  #installing composer dependency
   - travis_retry composer install --prefer-dist --no-interaction
+  #needed to use tests of Yii2
   - rm vendor/yiisoft/yii2-dev -Rf
   - travis_retry composer install --prefer-source -o --no-interaction
 
@@ -62,4 +69,4 @@ before_script:
   - isql-fb -z -q -i /dev/null
 
 script:
-  - phpunit
+  - vendor/bin/phpunit --verbose
