@@ -30,14 +30,11 @@ cache:
 before_install:
   - sudo sh -c "echo 'precedence ::ffff:0:0/96 100' >> /etc/gai.conf"
   - sudo apt-get update -qq 
-  - sudo apt-get install -qq firebird$FB-super firebird$FB-dev expect
-  - if [[ "$FB" == "2.1" ]]; then export DEBIAN_FRONTEND=readline; fi
-  - if [[ "$FB" == "2.1" ]]; then expect tests/ci/travis/dpkg_firebird2.1.exp; fi
-  - if [[ "$FB" == "2.1" ]]; then export DEBIAN_FRONTEND=dialog; fi
-  - if [[ "$FB" == "2.5" ]]; then export FIREBIRD_SERVER_CONFIG=/etc/default/firebird$FB; fi
-  - if [[ "$FB" == "2.5" ]]; then sudo sed /ENABLE_FIREBIRD_SERVER=/s/no/yes/ -i $FIREBIRD_SERVER_CONFIG; fi
-  - if [[ "$FB" == "2.5" ]]; then cat $FIREBIRD_SERVER_CONFIG | grep ENABLE_FIREBIRD_SERVER; fi
-  - sudo service firebird$FB-super start
+  
+  #installing and starting Firebird Server
+  - sudo chmod +x tests/ci/travis/*.sh
+  - sudo tests/ci/travis/setup_firebird${FB}.sh
+  - export PATH=$PATH:/usr/local/firebird/bin
 
   # initialize databases
   - echo "CREATE DATABASE 'localhost:/tmp/TEST.FDB' USER 'SYSDBA' PASSWORD 'masterkey' PAGE_SIZE 16384 DEFAULT CHARACTER SET UTF8;" > /tmp/create_test.sql
@@ -51,11 +48,18 @@ before_install:
   - (cd php-src/ext/pdo_firebird/; phpize && ./configure && make && sudo make install)
 
 install:
+  #enabling pdo_firebird
   - echo "extension=pdo_firebird.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+  - php -m | grep -i pdo
+
+  #preparing Yii2 environment
   - travis_retry composer self-update && composer --version
   - travis_retry composer global require "fxp/composer-asset-plugin:~1.1.3" --prefer-dist --no-interaction
   - export PATH="$HOME/.composer/vendor/bin:$PATH"
+
+  #installing composer dependency
   - travis_retry composer install --prefer-dist --no-interaction
+  #needed to use tests of Yii2
   - rm vendor/yiisoft/yii2-dev -Rf
   - travis_retry composer install --prefer-source -o --no-interaction
 
