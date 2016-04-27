@@ -4,6 +4,7 @@ namespace edgardmessias\unit\db\firebird;
 
 use edgardmessias\db\firebird\Schema;
 use yii\db\Query;
+use yiiunit\data\base\TraversableObject;
 
 /**
  * @group firebird
@@ -15,7 +16,7 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
     use \yii\db\SchemaBuilderTrait;
 
 
-    public $driverName = 'firebird';
+    protected $driverName = 'firebird';
 
     /**
      * @throws \Exception
@@ -28,16 +29,6 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
                 return new \edgardmessias\db\firebird\QueryBuilder($this->getConnection(true, false));
         }
         throw new \Exception('Test is not implemented for ' . $this->driverName);
-    }
-
-    /**
-     * adjust dbms specific escaping
-     * @param $sql
-     * @return mixed
-     */
-    protected function replaceQuotes($sql)
-    {
-        return str_replace(['[[', ']]'], '', $sql);
     }
 
     /**
@@ -56,11 +47,11 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
             [Schema::TYPE_BINARY, $this->binary(), 'blob'],
             [Schema::TYPE_BOOLEAN . ' DEFAULT 1 NOT NULL', $this->boolean()->notNull()->defaultValue(1), 'smallint DEFAULT 1 NOT NULL'],
             [Schema::TYPE_BOOLEAN, $this->boolean(), 'smallint'],
-//            [Schema::TYPE_CHAR . " CHECK (value LIKE 'test%')", $this->char()->check("value LIKE 'test%'"), "char(1) CHECK (value LIKE 'test%')"],
-//            [Schema::TYPE_CHAR . ' NOT NULL', $this->char()->notNull(), 'char(1) NOT NULL'],
-//            [Schema::TYPE_CHAR . "(6) CHECK (value LIKE 'test%')", $this->char(6)->check("value LIKE 'test%'"), "char(6) CHECK (value LIKE 'test%')"],
-//            [Schema::TYPE_CHAR . '(6)', $this->char(6), 'char(6)'],
-//            [Schema::TYPE_CHAR, $this->char(), 'char(1)'],
+            [Schema::TYPE_CHAR . " CHECK (value LIKE 'test%')", $this->char()->check("value LIKE 'test%'"), "char(1) CHECK (value LIKE 'test%')"],
+            [Schema::TYPE_CHAR . ' NOT NULL', $this->char()->notNull(), 'char(1) NOT NULL'],
+            [Schema::TYPE_CHAR . "(6) CHECK (value LIKE 'test%')", $this->char(6)->check("value LIKE 'test%'"), "char(6) CHECK (value LIKE 'test%')"],
+            [Schema::TYPE_CHAR . '(6)', $this->char(6), 'char(6)'],
+            [Schema::TYPE_CHAR, $this->char(), 'char(1)'],
             [Schema::TYPE_DATE . " CHECK (value BETWEEN '2011-01-01' AND '2013-01-01')", $this->date()->check("value BETWEEN '2011-01-01' AND '2013-01-01'"), "date CHECK (value BETWEEN '2011-01-01' AND '2013-01-01')"],
             [Schema::TYPE_DATE . ' NOT NULL', $this->date()->notNull(), 'date NOT NULL'],
             [Schema::TYPE_DATE, $this->date(), 'date'],
@@ -128,9 +119,24 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
     {
         $conditions = parent::conditionProvider();
 
-        $conditions[46] = [ ['=', 'date', (new Query())->select('max(date)')->from('test')->where(['id' => 5])], 'date = (SELECT max(date) AS max_date FROM test WHERE id=:qp0)', [':qp0' => 5] ];
-        $conditions[51] = [ ['in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]], '((id = :qp0 AND name = :qp1) OR (id = :qp2 AND name = :qp3))', [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']];
-        $conditions[52] = [ ['not in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]], '((id != :qp0 OR name != :qp1) AND (id != :qp2 OR name != :qp3))', [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']];
+        $conditions['composite in'] = [
+                ['in', ['id', 'name'], [['id' =>1, 'name' => 'oy']]],
+                '((id = :qp0 AND name = :qp1))',
+                [':qp0' => 1, ':qp1' => 'oy']
+            ];
+
+        $conditions['composite in using array objects'] = [
+                ['in', new TraversableObject(['id', 'name']), new TraversableObject([
+                    ['id' => 1, 'name' => 'oy'],
+                    ['id' => 2, 'name' => 'yo'],
+                ])],
+                '((id = :qp0 AND name = :qp1) OR (id = :qp2 AND name = :qp3))',
+                [':qp0' => 1, ':qp1' => 'oy', ':qp2' => 2, ':qp3' => 'yo']
+            ];
+
+        $conditions[52] = [ ['=', 'date', (new Query())->select('max(date)')->from('test')->where(['id' => 5])], 'date = (SELECT max(date) AS max_date FROM test WHERE id=:qp0)', [':qp0' => 5] ];
+        $conditions[57] = [ ['in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]], '((id = :qp0 AND name = :qp1) OR (id = :qp2 AND name = :qp3))', [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']];
+        $conditions[58] = [ ['not in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]], '((id != :qp0 OR name != :qp1) AND (id != :qp2 OR name != :qp3))', [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']];
         
         return $conditions;
     }
@@ -343,33 +349,50 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         $this->assertEquals(4, (new Query())->from('autoincrement_table')->max('id', $this->getConnection(false)));
     }
 
-//    public function testCommentColumn()
-//    {
-//        $qb = $this->getQueryBuilder();
-//
-//        $expected = $this->replaceQuotes("COMMENT ON COLUMN [[comment]].[[add_comment]] IS 'This is my column.'");
-//        $sql = $qb->addCommentOnColumn('comment', 'add_comment', 'This is my column.');
-//        $this->assertEquals($expected, $sql);
-//
-//        $expected = $this->replaceQuotes("COMMENT ON COLUMN [[comment]].[[replace_comment]] IS 'This is my column.'");
-//        $sql = $qb->addCommentOnColumn('comment', 'replace_comment', 'This is my column.');
-//        $this->assertEquals($expected, $sql);
-//
-//        $expected = $this->replaceQuotes("COMMENT ON COLUMN [[comment]].[[delete_comment]] IS NULL");
-//        $sql = $qb->dropCommentFromColumn('comment', 'delete_comment');
-//        $this->assertEquals($expected, $sql);
-//    }
-//
-//    public function testCommentTable()
-//    {
-//        $qb = $this->getQueryBuilder();
-//
-//        $expected = $this->replaceQuotes("COMMENT ON TABLE [[comment]] IS 'This is my table.'");
-//        $sql = $qb->addCommentOnTable('comment', 'This is my table.');
-//        $this->assertEquals($expected, $sql);
-//
-//        $expected = $this->replaceQuotes("COMMENT ON TABLE [[comment]] IS NULL");
-//        $sql = $qb->dropCommentFromTable('comment');
-//        $this->assertEquals($expected, $sql);
-//    }
+    public function testCommentColumn()
+    {
+        $qb = $this->getQueryBuilder();
+
+        $expected = $this->replaceQuotes("COMMENT ON COLUMN [[comment]].[[add_comment]] IS 'This is my column.'");
+        $sql = $qb->addCommentOnColumn('comment', 'add_comment', 'This is my column.');
+        $this->assertEquals($expected, $sql);
+
+        $expected = $this->replaceQuotes("COMMENT ON COLUMN [[comment]].[[replace_comment]] IS 'This is my column.'");
+        $sql = $qb->addCommentOnColumn('comment', 'replace_comment', 'This is my column.');
+        $this->assertEquals($expected, $sql);
+
+        $expected = $this->replaceQuotes("COMMENT ON COLUMN [[comment]].[[delete_comment]] IS NULL");
+        $sql = $qb->dropCommentFromColumn('comment', 'delete_comment');
+        $this->assertEquals($expected, $sql);
+    }
+
+    public function testCommentTable()
+    {
+        $qb = $this->getQueryBuilder();
+
+        $expected = $this->replaceQuotes("COMMENT ON TABLE [[comment]] IS 'This is my table.'");
+        $sql = $qb->addCommentOnTable('comment', 'This is my table.');
+        $this->assertEquals($expected, $sql);
+
+        $expected = $this->replaceQuotes("COMMENT ON TABLE [[comment]] IS NULL");
+        $sql = $qb->dropCommentFromTable('comment');
+        $this->assertEquals($expected, $sql);
+    }
+
+    public function testReplaceQuotes()
+    {
+        //Normal words
+        $this->assertEquals('comment', $this->replaceQuotes("[[comment]]"));
+        $this->assertEquals('test', $this->replaceQuotes("[[test]]"));
+        
+        //Reserved Words lower case
+        $this->assertEquals('"order"', $this->replaceQuotes("[[order]]"));
+        $this->assertEquals('"time"', $this->replaceQuotes("[[time]]"));
+        //Reserved Words UPPER CASE
+        $this->assertEquals('"ORDER"', $this->replaceQuotes("[[ORDER]]"));
+        $this->assertEquals('"TIME"', $this->replaceQuotes("[[TIME]]"));
+        //Reserved Words Multiple
+        $this->assertEquals('"order".comment', $this->replaceQuotes("[[order]].[[comment]]"));
+        $this->assertEquals('"order"."time"', $this->replaceQuotes("[[order]].[[time]]"));
+    }
 }

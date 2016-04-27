@@ -56,20 +56,55 @@ class ConnectionTest extends \yiiunit\framework\db\ConnectionTest
         $connection = $this->getConnection(false);
         $this->assertEquals('column', $connection->quoteColumnName('column'));
         $this->assertEquals('"column"', $connection->quoteColumnName('"column"'));
-        $this->assertEquals('table.column', $connection->quoteColumnName('table.column'));
-        $this->assertEquals('table."column"', $connection->quoteColumnName('table."column"'));
-        $this->assertEquals('"table"."column"', $connection->quoteColumnName('"table"."column"'));
         $this->assertEquals('[[column]]', $connection->quoteColumnName('[[column]]'));
         $this->assertEquals('{{column}}', $connection->quoteColumnName('{{column}}'));
         $this->assertEquals('(column)', $connection->quoteColumnName('(column)'));
 
         $this->assertEquals('"time"', $connection->quoteColumnName('time'));
         $this->assertEquals('"time"', $connection->quoteColumnName('"time"'));
-        $this->assertEquals('"order"."time"', $connection->quoteColumnName('order.time'));
-        $this->assertEquals('"order"."time"', $connection->quoteColumnName('order."time"'));
-        $this->assertEquals('"order"."time"', $connection->quoteColumnName('"order"."time"'));
         $this->assertEquals('[[time]]', $connection->quoteColumnName('[[time]]'));
         $this->assertEquals('{{time}}', $connection->quoteColumnName('{{time}}'));
         $this->assertEquals('(time)', $connection->quoteColumnName('(time)'));
     }
+
+    public function testQuoteFullColumnName()
+    {
+        $connection = $this->getConnection(false, false);
+        $this->assertEquals('table.column', $connection->quoteColumnName('table.column'));
+        $this->assertEquals('table."column"', $connection->quoteColumnName('table."column"'));
+        $this->assertEquals('"table".column', $connection->quoteColumnName('"table".column'));
+        $this->assertEquals('"table"."column"', $connection->quoteColumnName('"table"."column"'));
+
+        $this->assertEquals('[[table.column]]', $connection->quoteColumnName('[[table.column]]'));
+        $this->assertEquals('{{table}}.column', $connection->quoteColumnName('{{table}}.column'));
+        $this->assertEquals('{{table}}."column"', $connection->quoteColumnName('{{table}}."column"'));
+        $this->assertEquals('{{table}}.[[column]]', $connection->quoteColumnName('{{table}}.[[column]]'));
+        $this->assertEquals('{{%table}}.column', $connection->quoteColumnName('{{%table}}.column'));
+        $this->assertEquals('{{%table}}."column"', $connection->quoteColumnName('{{%table}}."column"'));
+
+        $this->assertEquals('table.column', $connection->quoteSql('[[table.column]]'));
+        $this->assertEquals('table.column', $connection->quoteSql('{{table}}.[[column]]'));
+        $this->assertEquals('table."column"', $connection->quoteSql('{{table}}."column"'));
+        $this->assertEquals('table.column', $connection->quoteSql('{{%table}}.[[column]]'));
+        $this->assertEquals('table."column"', $connection->quoteSql('{{%table}}."column"'));
+
+        $this->assertEquals('"order"."time"', $connection->quoteColumnName('order.time'));
+        $this->assertEquals('"order"."time"', $connection->quoteColumnName('order."time"'));
+        $this->assertEquals('"order"."time"', $connection->quoteColumnName('"order".time'));
+        $this->assertEquals('"order"."time"', $connection->quoteColumnName('"order"."time"'));
+
+        $this->assertEquals('[[order.time]]', $connection->quoteColumnName('[[order.time]]'));
+        $this->assertEquals('{{order}}."time"', $connection->quoteColumnName('{{order}}.time'));
+        $this->assertEquals('{{order}}."time"', $connection->quoteColumnName('{{order}}."time"'));
+        $this->assertEquals('{{order}}.[[time]]', $connection->quoteColumnName('{{order}}.[[time]]'));
+        $this->assertEquals('{{%order}}."time"', $connection->quoteColumnName('{{%order}}.time'));
+        $this->assertEquals('{{%order}}."time"', $connection->quoteColumnName('{{%order}}."time"'));
+
+        $this->assertEquals('"order"."time"', $connection->quoteSql('[[order.time]]'));
+        $this->assertEquals('"order"."time"', $connection->quoteSql('{{order}}.[[time]]'));
+        $this->assertEquals('"order"."time"', $connection->quoteSql('{{order}}."time"'));
+        $this->assertEquals('"order"."time"', $connection->quoteSql('{{%order}}.[[time]]'));
+        $this->assertEquals('"order"."time"', $connection->quoteSql('{{%order}}."time"'));
+    }
+
 }

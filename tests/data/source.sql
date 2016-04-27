@@ -93,6 +93,12 @@ END;
 -- SQL
 EXECUTE block AS
 BEGIN
+    IF (EXISTS(SELECT 1 FROM rdb$relations WHERE LOWER(rdb$relation_name) = 'comment')) THEN 
+        EXECUTE STATEMENT 'DROP TABLE comment;';
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
     IF (EXISTS(SELECT 1 FROM rdb$relations WHERE LOWER(rdb$relation_name) = 'animal_view')) THEN 
         EXECUTE STATEMENT 'DROP VIEW animal_view;';
 END;
@@ -149,6 +155,12 @@ EXECUTE block AS
 BEGIN
     IF (EXISTS(SELECT 1 FROM rdb$generators WHERE LOWER(rdb$generator_name) = 'gen_document_id')) THEN 
         EXECUTE STATEMENT 'DROP GENERATOR gen_document_id;';
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
+    IF (EXISTS(SELECT 1 FROM rdb$generators WHERE LOWER(rdb$generator_name) = 'seq_comment_id')) THEN 
+        EXECUTE STATEMENT 'DROP GENERATOR seq_comment_id;';
 END;
 -- SQL
 CREATE TABLE constraints (
@@ -352,6 +364,21 @@ ACTIVE BEFORE INSERT POSITION 0
 AS
 BEGIN
     if (NEW.ID is NULL) then NEW.ID = GEN_ID(gen_document_id, 1);
+END
+-- SQL
+CREATE TABLE comment (
+  id INTEGER NOT NULL,
+  type VARCHAR(255) NOT NULL,
+  PRIMARY KEY (id)
+);
+-- SQL
+CREATE SEQUENCE seq_comment_id;
+-- SQL
+CREATE TRIGGER tr_comment FOR comment
+ACTIVE BEFORE INSERT POSITION 0
+AS
+BEGIN
+    if (NEW.ID is NULL) then NEW.ID = NEXT VALUE FOR seq_comment_id;
 END
 -- SQL
 CREATE VIEW animal_view AS SELECT * FROM animal;

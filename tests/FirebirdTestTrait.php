@@ -4,6 +4,13 @@ namespace edgardmessias\unit\db\firebird;
 
 trait FirebirdTestTrait
 {
+    public $reservedWords = [
+        'ORDER',
+        'POSITION',
+        'TIME',
+        'VALUE',
+    ];
+
     private $_traitDbs = [];
 
     public function setUp()
@@ -55,5 +62,18 @@ trait FirebirdTestTrait
             }
         }
         return $db;
+    }
+
+    /**
+     * adjust dbms specific escaping
+     * @param $sql
+     * @return mixed
+     */
+    protected function replaceQuotes($sql)
+    {
+        $pattern = '/\[\[(' . implode('|', $this->reservedWords) . ')\]\]/i';
+        $sql = preg_replace($pattern, '"$1"', $sql);
+        
+        return str_replace(['[[', ']]'], '', $sql);
     }
 }
