@@ -23,7 +23,7 @@
         "ext-pdo_firebird": "*"
     },
     "require-dev": {
-        "yiisoft/yii2-dev": "2.0.7",
+        "yiisoft/yii2-dev": "2.0.x-dev",
         "phpunit/phpunit": "~4.4"
     },
     "autoload": {
