@@ -64,4 +64,4 @@ before_script:
   - isql-fb -z -q -i /dev/null
 
 script:
-  - phpunit
+  - vendor/bin/phpunit --verbose
