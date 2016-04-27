@@ -83,7 +83,12 @@ class Schema extends \yii\db\Schema
 
     public function quoteSimpleTableName($name)
     {
-        if (in_array(strtoupper($name), $this->reservedWords)) {
+        if($this->db->tablePrefix !== ''){
+            return $name;
+        }
+
+        $word = strtoupper(str_replace('%', '', $name));
+        if (in_array($word, $this->reservedWords)) {
             return strpos($name, '"') !== false ? $name : '"' . $name . '"';
         }
 
