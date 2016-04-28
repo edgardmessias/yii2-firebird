@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
@@ -58,7 +57,6 @@ class Command extends \yii\db\Command
     protected function bindPendingParams()
     {
         foreach ($this->_pendingParams as $name => $value) {
-//            var_dump($value);
             if ($value[1] == 'blob') {
                 $this->pdoStatement->bindParam($name, $value[0]);
             } else {

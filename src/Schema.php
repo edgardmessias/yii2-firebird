@@ -8,6 +8,7 @@
 
 namespace edgardmessias\db\firebird;
 
+use yii\base\InvalidCallException;
 use yii\db\ColumnSchema;
 use yii\db\Exception;
 use yii\db\TableSchema;
@@ -22,7 +23,7 @@ use yii\db\TableSchema;
  * property is read-only.
  * @property QueryBuilder $queryBuilder The query builder for this connection. This property is read-only.
  *
- * @author Paul Klimov <klimov.paul@gmail.com>
+ * @author Edgard Lorraine Messias <edgardmessias@gmail.com>
  * @since 2.0
  */
 class Schema extends \yii\db\Schema
@@ -186,7 +187,7 @@ class Schema extends \yii\db\Schema
                     rel.rdb$field_position;';
         try {
             $columns = $this->db->createCommand($sql)->queryAll();
-            if (!$columns) {
+            if (empty($columns)) {
                 return false;
             }
         } catch (Exception $e) {
@@ -229,7 +230,7 @@ class Schema extends \yii\db\Schema
     }
 
     /**
-     * @return \yii\db\ColumnSchema
+     * @return ColumnSchema
      * @throws \yii\base\InvalidConfigException
      */
     protected function createColumnSchema()
@@ -326,7 +327,7 @@ class Schema extends \yii\db\Schema
                         $c->scale = abs((int) $column['fscale']);
                         $dbType = "DECIMAL({$c->precision},{$c->scale})";
                         break;
-                    default :
+                    default:
                         $dbType = 'BIGINT';
                         break;
                 }
