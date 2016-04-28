@@ -303,12 +303,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/yiisoft/yii2.git",
-                "reference": "a9d18f581fc987c4f0048ee2d07202d1e5ce83a3"
+                "reference": "16e92d9eb41392f539937ecccca0d45ef303595c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/yiisoft/yii2/zipball/a9d18f581fc987c4f0048ee2d07202d1e5ce83a3",
-                "reference": "a9d18f581fc987c4f0048ee2d07202d1e5ce83a3",
+                "url": "https://api.github.com/repos/yiisoft/yii2/zipball/16e92d9eb41392f539937ecccca0d45ef303595c",
+                "reference": "16e92d9eb41392f539937ecccca0d45ef303595c",
                 "shasum": ""
             },
             "require": {
@@ -403,7 +403,7 @@
                 "framework",
                 "yii2"
             ],
-            "time": "2016-04-28 11:22:03"
+            "time": "2016-04-28 12:20:55"
         }
     ],
     "packages-dev": [
@@ -1313,25 +1313,25 @@
         },
         {
             "name": "symfony/yaml",
-            "version": "v3.0.4",
+            "version": "v2.8.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/yaml.git",
-                "reference": "0047c8366744a16de7516622c5b7355336afae96"
+                "reference": "584e52cb8f788a887553ba82db6caacb1d6260bb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/yaml/zipball/0047c8366744a16de7516622c5b7355336afae96",
-                "reference": "0047c8366744a16de7516622c5b7355336afae96",
+                "url": "https://api.github.com/repos/symfony/yaml/zipball/584e52cb8f788a887553ba82db6caacb1d6260bb",
+                "reference": "584e52cb8f788a887553ba82db6caacb1d6260bb",
                 "shasum": ""
             },
             "require": {
-                "php": ">=5.5.9"
+                "php": ">=5.3.9"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "3.0-dev"
+                    "dev-master": "2.8-dev"
                 }
             },
             "autoload": {
@@ -1358,7 +1358,7 @@
             ],
             "description": "Symfony Yaml Component",
             "homepage": "https://symfony.com",
-            "time": "2016-03-04 07:55:57"
+            "time": "2016-03-04 07:54:35"
         }
     ],
     "aliases": [],
@@ -1372,5 +1372,8 @@
         "ext-pdo": "*",
         "ext-pdo_firebird": "*"
     },
-    "platform-dev": []
+    "platform-dev": [],
+    "platform-overrides": {
+        "php": "5.4.45"
+    }
 }
