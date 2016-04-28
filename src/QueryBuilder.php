@@ -426,7 +426,16 @@ class QueryBuilder extends \yii\db\QueryBuilder
         } else {
             // use master connection to get the biggest PK value
             $value = $this->db->useMaster(function (Connection $db) use ($tableSchema) {
-                $key = reset($tableSchema->primaryKey);
+                $key = false;
+                foreach ($tableSchema->primaryKey as $name) {
+                    if ($tableSchema->columns[$name]->autoIncrement) {
+                        $key = $name;
+                        break;
+                    }
+                }
+                if($key === false){
+                    return 0;
+                }
                 return $db->createCommand("SELECT MAX({$this->db->quoteColumnName($key)}) FROM {$this->db->quoteTableName($tableSchema->name)}")->queryScalar();
             }) + 1;
         }
