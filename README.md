@@ -7,6 +7,8 @@ This extension adds [Firebird](http://www.firebirdsql.org/) database engine exte
 [![Build Status](https://travis-ci.org/edgardmessias/yii2-firebird.svg?branch=master)](https://travis-ci.org/edgardmessias/yii2-firebird)
 [![Dependency Status](https://www.versioneye.com/php/edgardmessias:yii2-firebird/dev-master/badge.png)](https://www.versioneye.com/php/edgardmessias:yii2-firebird/dev-master)
 [![Reference Status](https://www.versioneye.com/php/edgardmessias:yii2-firebird/reference_badge.svg)](https://www.versioneye.com/php/edgardmessias:yii2-firebird/references)
+[![Code Coverage](https://scrutinizer-ci.com/g/edgardmessias/yii2-firebird/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/edgardmessias/yii2-firebird/?branch=master)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/edgardmessias/yii2-firebird/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/edgardmessias/yii2-firebird/?branch=master)
 
 Requirements
 ------------
