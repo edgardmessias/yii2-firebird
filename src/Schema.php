@@ -9,7 +9,6 @@
 namespace edgardmessias\db\firebird;
 
 use yii\base\InvalidCallException;
-use yii\db\ColumnSchema;
 use yii\db\Exception;
 use yii\db\TableSchema;
 
