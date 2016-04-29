@@ -376,8 +376,8 @@ class QueryBuilder extends \yii\db\QueryBuilder
         }
         
         $baseSql = 'ALTER TABLE ' . $this->db->quoteTableName($table)
-        . ' ALTER '. $this->db->quoteColumnName($column)
-        . (($hasType) ? ' TYPE ': ' ') .  $this->getColumnType($type);
+        . ' ALTER ' . $this->db->quoteColumnName($column)
+        . (($hasType) ? ' TYPE ' : ' ') .  $this->getColumnType($type);
         
         if ($columnSchema->allowNull == $allowNullNewType) {
             return $baseSql;
@@ -433,7 +433,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
                         break;
                     }
                 }
-                if ($key === false){
+                if ($key === false) {
                     return 0;
                 }
                 return $db->createCommand("SELECT MAX({$this->db->quoteColumnName($key)}) FROM {$this->db->quoteTableName($tableSchema->name)}")->queryScalar();
