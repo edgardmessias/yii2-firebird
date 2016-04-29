@@ -21,28 +21,20 @@ class Connection extends \yii\db\Connection
     public $schemaMap = [
         'firebird' => 'edgardmessias\db\firebird\Schema', // Firebird
     ];
+
+    /**
+     * @inheritdoc
+     */
     public $pdoClass = 'edgardmessias\db\firebird\PdoAdapter';
 
+    /**
+     * @inheritdoc
+     */
+    public $commandClass = 'edgardmessias\db\firebird\Command';
     /**
      * @var Transaction the currently active transaction
      */
     private $_transaction;
-
-    /**
-     * Creates a command for execution.
-     * @param string $sql the SQL statement to be executed
-     * @param array $params the parameters to be bound to the SQL statement
-     * @return Command the DB command
-     */
-    public function createCommand($sql = null, $params = [])
-    {
-        $command = new Command([
-            'db'  => $this,
-            'sql' => $sql,
-        ]);
-
-        return $command->bindValues($params);
-    }
 
     /**
      * Returns the currently active transaction.
