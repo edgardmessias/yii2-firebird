@@ -533,7 +533,7 @@ ORDER BY id.RDB$RELATION_NAME, id.RDB$INDEX_NAME, ids.RDB$FIELD_POSITION';
         }
         
         if ($sequenceName !== '') {
-            return $this->db->createCommand('SELECT GEN_ID(' . $this->db->quoteTableName($sequenceName) .  ', 0 ) FROM RDB$DATABASE;')->queryScalar();
+            return $this->db->createCommand('SELECT GEN_ID(' . $this->db->quoteTableName($sequenceName) . ', 0 ) FROM RDB$DATABASE;')->queryScalar();
         }
 
         if ($this->_lastInsertID !== false) {
