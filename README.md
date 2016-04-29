@@ -1,5 +1,9 @@
 Firebird Extension for Yii 2
 ==========================
+[![Latest Stable Version](https://poser.pugx.org/edgardmessias/yii2-firebird/v/stable)](https://packagist.org/packages/edgardmessias/yii2-firebird)
+[![Total Downloads](https://poser.pugx.org/edgardmessias/yii2-firebird/downloads)](https://packagist.org/packages/edgardmessias/yii2-firebird)
+[![Latest Unstable Version](https://poser.pugx.org/edgardmessias/yii2-firebird/v/unstable)](https://packagist.org/packages/edgardmessias/yii2-firebird)
+[![License](https://poser.pugx.org/edgardmessias/yii2-firebird/license)](https://packagist.org/packages/edgardmessias/yii2-firebird)
 
 This branch use last stable version of Yii2 (dev)
 
