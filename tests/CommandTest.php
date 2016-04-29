@@ -156,7 +156,7 @@ SQL;
     {
         $db = $this->getConnection();
 
-        if($db->getSchema()->getTableSchema('testCreateTable') !== null){
+        if ($db->getSchema()->getTableSchema('testCreateTable') !== null) {
             $db->createCommand()->dropTable('testCreateTable')->execute();
             //Update metadata in connection
             $db->close();
@@ -179,7 +179,7 @@ SQL;
     {
         $db = $this->getConnection();
 
-        if($db->getSchema()->getTableSchema('testAlterTable') !== null){
+        if ($db->getSchema()->getTableSchema('testAlterTable') !== null) {
             $db->createCommand()->dropTable('testAlterTable')->execute();
             //Update metadata in connection
             $db->close();
@@ -220,5 +220,4 @@ SQL;
         $command->execute();
         $this->assertEquals(3, $db->getSchema()->getLastInsertID('gen_profile_id'));
     }
-
 }

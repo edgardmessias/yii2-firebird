@@ -197,5 +197,4 @@ class Transaction extends \yii\db\Transaction
     {
         return $this->_level;
     }
-
 }

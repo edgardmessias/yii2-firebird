@@ -84,7 +84,7 @@ class Schema extends \yii\db\Schema
 
     public function quoteSimpleTableName($name)
     {
-        if($this->db->tablePrefix !== ''){
+        if ($this->db->tablePrefix !== '') {
             return $name;
         }
 
@@ -250,7 +250,7 @@ class Schema extends \yii\db\Schema
         $c->name = strtolower(rtrim($column['fname']));
         $c->allowNull = $column['fnull'] !== '1';
         $c->isPrimaryKey = $column['fprimary'];
-        $c->autoIncrement = (boolean)$column['fautoinc'];
+        $c->autoIncrement = (boolean) $column['fautoinc'];
         $c->comment = $column['fcomment'] === null ? '' : $column['fcomment'];
 
         $c->type = self::TYPE_STRING;
@@ -498,7 +498,7 @@ ORDER BY id.RDB$RELATION_NAME, id.RDB$INDEX_NAME, ids.RDB$FIELD_POSITION';
         $returnColumns = $this->getTableSchema($table)->primaryKey;
         if (!empty($returnColumns)) {
             $returning = [];
-            foreach ((array)$returnColumns as $name) {
+            foreach ((array) $returnColumns as $name) {
                 $returning[] = $this->quoteColumnName($name);
             }
             $sql .= ' RETURNING ' . implode(', ', $returning);
@@ -512,7 +512,7 @@ ORDER BY id.RDB$RELATION_NAME, id.RDB$INDEX_NAME, ids.RDB$FIELD_POSITION';
             return false;
         } else {
             if (!empty($returnColumns)) {
-                foreach ((array)$returnColumns as $name) {
+                foreach ((array) $returnColumns as $name) {
                     if ($this->getTableSchema($table)->getColumn($name)->autoIncrement) {
                         $this->_lastInsertID = $result[$name];
                         break;
@@ -533,7 +533,7 @@ ORDER BY id.RDB$RELATION_NAME, id.RDB$INDEX_NAME, ids.RDB$FIELD_POSITION';
         }
         
         if ($sequenceName !== '') {
-            return $this->db->createCommand('SELECT GEN_ID('. $this->db->quoteTableName($sequenceName) .  ', 0 ) FROM RDB$DATABASE;')->queryScalar();
+            return $this->db->createCommand('SELECT GEN_ID(' . $this->db->quoteTableName($sequenceName) .  ', 0 ) FROM RDB$DATABASE;')->queryScalar();
         }
 
         if ($this->_lastInsertID !== false) {

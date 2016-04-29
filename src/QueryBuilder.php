@@ -375,9 +375,9 @@ class QueryBuilder extends \yii\db\QueryBuilder
             }
         }
         
-        $baseSql    = 'ALTER TABLE ' . $this->db->quoteTableName($table)
+        $baseSql = 'ALTER TABLE ' . $this->db->quoteTableName($table)
         . ' ALTER '. $this->db->quoteColumnName($column)
-        . (($hasType)? ' TYPE ': ' ') .  $this->getColumnType($type);
+        . (($hasType) ? ' TYPE ': ' ') .  $this->getColumnType($type);
         
         if ($columnSchema->allowNull == $allowNullNewType) {
             return $baseSql;
@@ -425,7 +425,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
             $value = (int) $value;
         } else {
             // use master connection to get the biggest PK value
-            $value = $this->db->useMaster(function (Connection $db) use ($tableSchema) {
+            $value = $this->db->useMaster(function(Connection $db) use ($tableSchema) {
                 $key = false;
                 foreach ($tableSchema->primaryKey as $name) {
                     if ($tableSchema->columns[$name]->autoIncrement) {
@@ -433,7 +433,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
                         break;
                     }
                 }
-                if($key === false){
+                if ($key === false){
                     return 0;
                 }
                 return $db->createCommand("SELECT MAX({$this->db->quoteColumnName($key)}) FROM {$this->db->quoteTableName($tableSchema->name)}")->queryScalar();

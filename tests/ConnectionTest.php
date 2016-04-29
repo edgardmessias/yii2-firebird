@@ -106,5 +106,4 @@ class ConnectionTest extends \yiiunit\framework\db\ConnectionTest
         $this->assertEquals('"order"."time"', $connection->quoteSql('{{%order}}.[[time]]'));
         $this->assertEquals('"order"."time"', $connection->quoteSql('{{%order}}."time"'));
     }
-
 }
