@@ -18,13 +18,13 @@
         }
     ],
     "require": {
-        "yiisoft/yii2": "~2.0.8",
+        "yiisoft/yii2": "~2.0.9",
         "ext-pdo": "*",
         "ext-pdo_firebird": "*"
     },
     "require-dev": {
         "yiisoft/yii2-dev": "2.0.x-dev",
-        "phpunit/phpunit": "~4.4"
+        "phpunit/phpunit": "~4.8"
     },
     "autoload": {
         "psr-4": {
