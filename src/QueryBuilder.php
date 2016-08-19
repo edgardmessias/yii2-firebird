@@ -244,6 +244,14 @@ class QueryBuilder extends \yii\db\QueryBuilder
         } else {
             $columnSchemas = [];
         }
+        
+        //Empty insert
+        if(empty($columns)){
+            $columns = [];
+            foreach ($columnSchemas as $columnSchema) {
+                $columns[$columnSchema->name] = $columnSchema->defaultValue;
+            }
+        }
 
         foreach ($columns as $name => $value) {
             if ($value instanceof Expression) {
