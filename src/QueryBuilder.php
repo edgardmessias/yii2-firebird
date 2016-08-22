@@ -246,10 +246,12 @@ class QueryBuilder extends \yii\db\QueryBuilder
         }
         
         //Empty insert
-        if(empty($columns)){
+        if(empty($columns) && !empty($columnSchemas)){
             $columns = [];
             foreach ($columnSchemas as $columnSchema) {
-                $columns[$columnSchema->name] = $columnSchema->defaultValue;
+                if(!$columnSchema->autoIncrement){
+                    $columns[$columnSchema->name] = $columnSchema->defaultValue;
+                }
             }
         }
 
