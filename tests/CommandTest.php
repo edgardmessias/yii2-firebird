@@ -130,6 +130,29 @@ SQL;
         $this->markTestSkipped('firebird does not support parameter in function');
     }
 
+    public function testBatchInsert()
+    {
+        $command = $this->getConnection()->createCommand();
+        $command->batchInsert(
+            '{{customer}}',
+            ['email', 'name', 'address'],
+            [
+                ['t1@example.com', 't1', 't1 address'],
+                ['t2@example.com', null, false],
+            ]
+        );
+        $this->assertEquals(2, $command->execute());
+
+        // @see https://github.com/yiisoft/yii2/issues/11693
+        $command = $this->getConnection(false)->createCommand();
+        $command->batchInsert(
+            '{{customer}}',
+            ['email', 'name', 'address'],
+            []
+        );
+        $this->assertEquals(0, $command->execute());
+    }
+
     public function testInsertExpression()
     {
         $db = $this->getConnection();
