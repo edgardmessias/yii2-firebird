@@ -17,6 +17,8 @@ Requirements
 
 At least Firebird version 2.0 is required. However, in order to use all extension features.
 
+Not work with Firebird 3.0 [See this bug](https://bugs.php.net/bug.php?id=72931)
+
 Unsupported
 ------------
 
