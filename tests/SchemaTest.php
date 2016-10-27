@@ -3,9 +3,6 @@
 namespace edgardmessias\unit\db\firebird;
 
 use edgardmessias\db\firebird\Schema;
-use PDO;
-use yii\caching\FileCache;
-use yii\db\Expression;
 
 /**
  * @group firebird

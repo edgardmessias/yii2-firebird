@@ -69,6 +69,12 @@ END;
 -- SQL
 EXECUTE block AS
 BEGIN
+    IF (EXISTS(SELECT 1 FROM rdb$relations WHERE LOWER(rdb$relation_name) = 'negative_default_values')) THEN 
+        EXECUTE STATEMENT 'DROP TABLE negative_default_values;';
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
     IF (EXISTS(SELECT 1 FROM rdb$relations WHERE LOWER(rdb$relation_name) = 'constraints')) THEN 
         EXECUTE STATEMENT 'DROP TABLE constraints;';
 END;
@@ -308,6 +314,14 @@ AS
 BEGIN
     if (NEW.ID is NULL) then NEW.ID = NEXT VALUE FOR seq_null_values_id;
 END
+-- SQL
+CREATE TABLE negative_default_values (
+smallint_col smallint default '-123',
+  int_col integer default '-123',
+  bigint_col bigint default '-123',
+  float_col double precision default '-12345.6789',
+  numeric_col decimal(5,2) default '-33.22'
+);
 -- SQL
 CREATE TABLE type (
   int_col INTEGER NOT NULL,
