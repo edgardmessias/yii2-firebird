@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<ruleset name="Yii2-Firebird">
+    <description>A custom coding standard</description>
+
+    <rule ref="./vendor/yiisoft/yii2-coding-standards/Yii2"/>
+
+    <!-- Ignore declare new symbols and execute logic with side effects same file -->
+    <rule ref="PSR1.Files.SideEffects.FoundWithSymbols">
+        <exclude-pattern>/tests/bootstrap.php$</exclude-pattern>
+    </rule>
+    
+    <exclude-pattern>/vendor/*</exclude-pattern>
+</ruleset>

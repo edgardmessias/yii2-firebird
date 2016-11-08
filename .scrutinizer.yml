@@ -8,3 +8,12 @@ tools:
     # and a huge bunch of false-positives
     php_sim: false
     php_cpd: false
+#    php_code_sniffer: true
+
+build:
+    dependencies:
+        before:
+            - composer install --ignore-platform-reqs
+    tests:
+        override:
+            - phpcs-run .

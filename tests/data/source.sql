@@ -81,12 +81,6 @@ END;
 -- SQL
 EXECUTE block AS
 BEGIN
-    IF (EXISTS(SELECT 1 FROM rdb$relations WHERE LOWER(rdb$relation_name) = 'negative_default_values')) THEN 
-        EXECUTE STATEMENT 'DROP TABLE negative_default_values;';
-END;
--- SQL
-EXECUTE block AS
-BEGIN
     IF (EXISTS(SELECT 1 FROM rdb$relations WHERE LOWER(rdb$relation_name) = 'animal')) THEN 
         EXECUTE STATEMENT 'DROP TABLE animal;';
 END;
@@ -346,14 +340,6 @@ CREATE TABLE type (
   ts_default TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   bit_col SMALLINT DEFAULT '130' NOT NULL
 
-);
--- SQL
-CREATE TABLE negative_default_values (
-  smallint_col SMALLINT DEFAULT '-123',
-  int_col INTEGER DEFAULT '-123',
-  bigint_col BIGINT DEFAULT '-123',
-  float_col DOUBLE PRECISION DEFAULT '-12345.6789',
-  numeric_col DECIMAL(5,2) DEFAULT '-33.22'
 );
 -- SQL
 CREATE TABLE animal (
