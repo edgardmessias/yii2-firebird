@@ -34,7 +34,7 @@ class PdoAdapter extends PDO
     public function __construct($dsn, $username, $password, $driver_options = [])
     {
         // Windows OS paths with backslashes should be changed
-        $dsn = str_replace("\\", "/", $dsn);
+        $dsn = str_replace('\\', '/', $dsn);
         // apply error mode
         $driver_options[PDO::ATTR_ERRMODE] = PDO::ERRMODE_EXCEPTION;
         // lower case column names in results are necessary for Yii ActiveRecord proper functioning
@@ -58,7 +58,7 @@ class PdoAdapter extends PDO
         }
 
         if ($isolationLevel === null) {
-            $r = $this->exec("SET TRANSACTION");
+            $r = $this->exec('SET TRANSACTION');
             $success = ($r !== false);
             if ($success) {
                 $this->_inTransaction = true;
@@ -80,7 +80,7 @@ class PdoAdapter extends PDO
      */
     public function commit()
     {
-        $r = $this->exec("COMMIT");
+        $r = $this->exec('COMMIT');
         $this->setAttribute(PDO::ATTR_AUTOCOMMIT, true);
         $success = ($r !== false);
         if ($success) {
@@ -95,7 +95,7 @@ class PdoAdapter extends PDO
      */
     public function rollBack()
     {
-        $r = $this->exec("ROLLBACK");
+        $r = $this->exec('ROLLBACK');
         $this->setAttribute(PDO::ATTR_AUTOCOMMIT, true);
         $success = ($r !== false);
         if ($success) {

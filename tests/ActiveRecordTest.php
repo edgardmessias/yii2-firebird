@@ -28,10 +28,11 @@ class ActiveRecordTest extends \yiiunit\framework\db\ActiveRecordTest
         $this->markTestSkipped();
     }
     
-    public function testCastValues() {
+    public function testCastValues()
+    {
         if (version_compare(phpversion('pdo_firebird'), '7.0.13', '<=')) {
             $this->markTestSkipped('BLOB bug for PHP <= 7.0.13, see https://bugs.php.net/bug.php?id=61183');
-        }        
+        }
         parent::testCastValues();
     }
 }

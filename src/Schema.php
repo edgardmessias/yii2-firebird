@@ -204,10 +204,10 @@ class Schema extends \yii\db\Schema
         } catch (Exception $e) {
             return false;
         }
-        $pkeys = array_map("rtrim", $pkeys);
-        $pkeys = array_map("strtolower", $pkeys);
+        $pkeys = array_map('rtrim', $pkeys);
+        $pkeys = array_map('strtolower', $pkeys);
         foreach ($columns as $key => $column) {
-            $column = array_map("strtolower", $column);
+            $column = array_map('strtolower', $column);
             $columns[$key]['fprimary'] = in_array(rtrim($column['fname']), $pkeys);
         }
         foreach ($columns as $column) {
@@ -266,7 +266,7 @@ class Schema extends \yii\db\Schema
         if ($defaultValue === null) {
             $defaultValue = $column['fdefault_value'];
         }
-        $dbType = "";
+        $dbType = '';
         $baseTypes = [
             7   => 'SMALLINT',
             8   => 'INTEGER',
@@ -399,8 +399,8 @@ class Schema extends \yii\db\Schema
         foreach ($fkeys as $fkey) {
             // Zoggo - Added strtolower here to guarantee that values are
             // returned lower case. Otherwise gii generates wrong code.
-            $fkey = array_map("rtrim", $fkey);
-            $fkey = array_map("strtolower", $fkey);
+            $fkey = array_map('rtrim', $fkey);
+            $fkey = array_map('strtolower', $fkey);
 
             if (!isset($constraints[$fkey['fconstraint']])) {
                 $constraints[$fkey['fconstraint']] = [

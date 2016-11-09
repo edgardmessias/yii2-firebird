@@ -159,7 +159,7 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
     public function testBuildUnion()
     {
         $expectedQuerySql = $this->replaceQuotes(
-            "SELECT [[id]] FROM [[TotalExample]] [[t1]] WHERE (w > 0) AND (x < 2) UNION SELECT [[id]] FROM [[TotalTotalExample]] [[t2]] WHERE w > 5 UNION ALL SELECT [[id]] FROM [[TotalTotalExample]] [[t3]] WHERE w = 3"
+            'SELECT [[id]] FROM [[TotalExample]] [[t1]] WHERE (w > 0) AND (x < 2) UNION SELECT [[id]] FROM [[TotalTotalExample]] [[t2]] WHERE w > 5 UNION ALL SELECT [[id]] FROM [[TotalTotalExample]] [[t3]] WHERE w = 3'
         );
         $query = new Query();
         $secondQuery = new Query();
@@ -174,7 +174,7 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
               ->from('TotalExample t1')
               ->where(['and', 'w > 0', 'x < 2'])
               ->union($secondQuery)
-              ->union($thirdQuery, TRUE);
+              ->union($thirdQuery, true);
         list($actualQuerySql, $queryParams) = $this->getQueryBuilder()->build($query);
         $this->assertEquals($expectedQuerySql, $actualQuerySql);
         $this->assertEquals([], $queryParams);
@@ -245,13 +245,13 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         $columns = $connection->getTableSchema('type', true)->columnNames;
         
         foreach ($columns as $column) {
-            $connection->createCommand($qb->renameColumn('type', $column, $column.'_new'))->execute();
+            $connection->createCommand($qb->renameColumn('type', $column, $column . '_new'))->execute();
         }
         
         $schema = $connection->getTableSchema('type', true);
         foreach ($columns as $column) {
             $this->assertNotContains($column, $schema->columnNames);
-            $this->assertContains($column.'_new', $schema->columnNames);
+            $this->assertContains($column . '_new', $schema->columnNames);
         }
     }
     
@@ -262,7 +262,7 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         
         $connection->createCommand($qb->alterColumn('customer', 'email', Schema::TYPE_STRING . '(128) NULL'))->execute();
         $connection->createCommand($qb->alterColumn('customer', 'name', "SET DEFAULT 'NO NAME'"))->execute();
-        $connection->createCommand($qb->alterColumn('customer', 'name', Schema::TYPE_STRING . "(128) NOT NULL"))->execute();
+        $connection->createCommand($qb->alterColumn('customer', 'name', Schema::TYPE_STRING . '(128) NOT NULL'))->execute();
         $connection->createCommand($qb->alterColumn('customer', 'profile_id', Schema::TYPE_INTEGER . ' NOT NULL'))->execute();
 
         $newColumns = $connection->getTableSchema('customer', true)->columns;
@@ -367,7 +367,7 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         $sql = $qb->addCommentOnColumn('comment', 'replace_comment', 'This is my column.');
         $this->assertEquals($expected, $sql);
 
-        $expected = $this->replaceQuotes("COMMENT ON COLUMN [[comment]].[[delete_comment]] IS NULL");
+        $expected = $this->replaceQuotes('COMMENT ON COLUMN [[comment]].[[delete_comment]] IS NULL');
         $sql = $qb->dropCommentFromColumn('comment', 'delete_comment');
         $this->assertEquals($expected, $sql);
     }
@@ -380,7 +380,7 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         $sql = $qb->addCommentOnTable('comment', 'This is my table.');
         $this->assertEquals($expected, $sql);
 
-        $expected = $this->replaceQuotes("COMMENT ON TABLE [[comment]] IS NULL");
+        $expected = $this->replaceQuotes('COMMENT ON TABLE [[comment]] IS NULL');
         $sql = $qb->dropCommentFromTable('comment');
         $this->assertEquals($expected, $sql);
     }
@@ -388,17 +388,17 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
     public function testReplaceQuotes()
     {
         //Normal words
-        $this->assertEquals('comment', $this->replaceQuotes("[[comment]]"));
-        $this->assertEquals('test', $this->replaceQuotes("[[test]]"));
+        $this->assertEquals('comment', $this->replaceQuotes('[[comment]]'));
+        $this->assertEquals('test', $this->replaceQuotes('[[test]]'));
         
         //Reserved Words lower case
-        $this->assertEquals('"order"', $this->replaceQuotes("[[order]]"));
-        $this->assertEquals('"time"', $this->replaceQuotes("[[time]]"));
+        $this->assertEquals('"order"', $this->replaceQuotes('[[order]]'));
+        $this->assertEquals('"time"', $this->replaceQuotes('[[time]]'));
         //Reserved Words UPPER CASE
-        $this->assertEquals('"ORDER"', $this->replaceQuotes("[[ORDER]]"));
-        $this->assertEquals('"TIME"', $this->replaceQuotes("[[TIME]]"));
+        $this->assertEquals('"ORDER"', $this->replaceQuotes('[[ORDER]]'));
+        $this->assertEquals('"TIME"', $this->replaceQuotes('[[TIME]]'));
         //Reserved Words Multiple
-        $this->assertEquals('"order".comment', $this->replaceQuotes("[[order]].[[comment]]"));
-        $this->assertEquals('"order"."time"', $this->replaceQuotes("[[order]].[[time]]"));
+        $this->assertEquals('"order".comment', $this->replaceQuotes('[[order]].[[comment]]'));
+        $this->assertEquals('"order"."time"', $this->replaceQuotes('[[order]].[[time]]'));
     }
 }

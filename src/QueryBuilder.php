@@ -107,7 +107,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
                     continue;
                 }
                 $matches = [];
-                if (preg_match("/^(COUNT|SUM|AVG|MIN|MAX)\([\{\[]{0,2}(\w+|\*)[\}\]]{0,2}\)$/i", $column, $matches)) {
+                if (preg_match('/^(COUNT|SUM|AVG|MIN|MAX)\([\{\[]{0,2}(\w+|\*)[\}\]]{0,2}\)$/i', $column, $matches)) {
                     $function = $matches[1];
                     $alias = $matches[2] != '*' ? $matches[2] : 'ALL';
 
@@ -246,10 +246,10 @@ class QueryBuilder extends \yii\db\QueryBuilder
         }
         
         //Empty insert
-        if(empty($columns) && !empty($columnSchemas)){
+        if (empty($columns) && !empty($columnSchemas)) {
             $columns = [];
             foreach ($columnSchemas as $columnSchema) {
-                if(!$columnSchema->autoIncrement){
+                if (!$columnSchema->autoIncrement) {
                     $columns[$columnSchema->name] = $columnSchema->defaultValue;
                 }
             }
@@ -343,7 +343,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
      */
     public function truncateTable($table)
     {
-        return "DELETE FROM " . $this->db->quoteTableName($table);
+        return 'DELETE FROM ' . $this->db->quoteTableName($table);
     }
     
     /**
@@ -351,8 +351,8 @@ class QueryBuilder extends \yii\db\QueryBuilder
      */
     public function dropColumn($table, $column)
     {
-        return "ALTER TABLE " . $this->db->quoteTableName($table)
-            . " DROP " . $this->db->quoteColumnName($column);
+        return 'ALTER TABLE ' . $this->db->quoteTableName($table)
+            . ' DROP ' . $this->db->quoteColumnName($column);
     }
     
     /**
@@ -360,9 +360,9 @@ class QueryBuilder extends \yii\db\QueryBuilder
      */
     public function renameColumn($table, $oldName, $newName)
     {
-        return "ALTER TABLE " . $this->db->quoteTableName($table)
-            . " ALTER " . $this->db->quoteColumnName($oldName)
-            . " TO " . $this->db->quoteColumnName($newName);
+        return 'ALTER TABLE ' . $this->db->quoteTableName($table)
+            . ' ALTER ' . $this->db->quoteColumnName($oldName)
+            . ' TO ' . $this->db->quoteColumnName($newName);
     }
     
     /**
@@ -374,9 +374,9 @@ class QueryBuilder extends \yii\db\QueryBuilder
         $tableSchema = $schema->getTableSchema($table);
         $columnSchema = $tableSchema->getColumn($column);
         
-        $allowNullNewType = !preg_match("/not +null/i", $type);
+        $allowNullNewType = !preg_match('/not +null/i', $type);
         
-        $type = preg_replace("/ +(not)? *null/i", "", $type);
+        $type = preg_replace('/ +(not)? *null/i', '', $type);
         
         $hasType = false;
         
@@ -439,7 +439,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
             $value = (int) $value;
         } else {
             // use master connection to get the biggest PK value
-            $value = $this->db->useMaster(function(Connection $db) use ($tableSchema) {
+            $value = $this->db->useMaster(function (Connection $db) use ($tableSchema) {
                 $key = false;
                 foreach ($tableSchema->primaryKey as $name) {
                     if ($tableSchema->columns[$name]->autoIncrement) {
@@ -515,7 +515,6 @@ BEGIN
 END;
 SQL;
                 return $sqlBlock;
-        
     }
 
     /**

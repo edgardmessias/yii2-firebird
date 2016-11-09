@@ -21,7 +21,7 @@ class CommandTest extends \yiiunit\framework\db\CommandTest
 
         $sql = 'SELECT [[id]], [[t.name]] FROM {{customer}} t';
         $command = $db->createCommand($sql);
-        $this->assertEquals("SELECT id, t.name FROM customer t", $command->sql);
+        $this->assertEquals('SELECT id, t.name FROM customer t', $command->sql);
     }
 
     public function testColumnCase()
@@ -57,7 +57,7 @@ class CommandTest extends \yiiunit\framework\db\CommandTest
     {
         if (version_compare(phpversion('pdo_firebird'), '7.0.13', '<=')) {
             $this->markTestSkipped('BLOB bug for PHP <= 7.0.13, see https://bugs.php.net/bug.php?id=61183');
-        }        
+        }
         
         $db = $this->getConnection();
 
