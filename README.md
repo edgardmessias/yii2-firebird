@@ -29,8 +29,7 @@ Unsupported
 Functions not supported by the Firebird database:
 
  * Rename Table
- * Check Integrity
- * BLOB data type - [See this bug](https://bugs.php.net/bug.php?id=61183)
+ * Check Integrity 
 
 Installation
 ------------
