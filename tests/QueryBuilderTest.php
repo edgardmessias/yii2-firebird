@@ -281,14 +281,20 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         
         $this->assertEquals('DROP INDEX idx_int_col', $qb->dropIndex('idx_int_col', 'type'));
         
-        $columns = $connection->getTableSchema('type', true)->columnNames;
+        $columns = $connection->getTableSchema('type', true)->columns;
         
         foreach ($columns as $column) {
-            $result = $connection->createCommand($qb->createIndex('idx_' .$column, 'type', $column))->execute();
+            if (strpos($column->dbType, 'blob') !== false) {
+                continue;
+            }
+            $result = $connection->createCommand($qb->createIndex('idx_' . $column->name, 'type', $column->name))->execute();
         }
         
         foreach ($columns as $column) {
-            $result = $connection->createCommand($qb->dropIndex('idx_' .$column, 'type'))->execute();
+            if (strpos($column->dbType, 'blob') !== false) {
+                continue;
+            }
+            $result = $connection->createCommand($qb->dropIndex('idx_' . $column->name, 'type'))->execute();
         }
     }
     

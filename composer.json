@@ -21,7 +21,7 @@
         "yiisoft/yii2": "~2.0.10"
     },
     "require-dev": {
-        "yiisoft/yii2-dev": "2.0.x-dev",
+        "yiisoft/yii2-dev": "~2.0.10",
         "yiisoft/yii2-coding-standards": "^2.0.2",
         "phpunit/phpunit": "~4.8"
     },

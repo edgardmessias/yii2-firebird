@@ -55,6 +55,10 @@ class CommandTest extends \yiiunit\framework\db\CommandTest
     
     public function testBindParamValue()
     {
+        if (version_compare(phpversion('pdo_firebird'), '7.0.13', '<=')) {
+            $this->markTestSkipped('BLOB bug for PHP <= 7.0.13, see https://bugs.php.net/bug.php?id=61183');
+        }        
+        
         $db = $this->getConnection();
 
         // bindParam
@@ -95,10 +99,6 @@ SQL;
         $this->assertEquals(1, $command->execute());
 
         $command = $db->createCommand('SELECT [[int_col]], [[char_col]], [[float_col]], [[blob_col]], [[numeric_col]], [[bool_col]] FROM {{type}}');
-        
-        //For Firebird
-        $command->prepare();
-        $command->pdoStatement->bindColumn('blob_col', $blobCol, \PDO::PARAM_LOB);
         
         $row = $command->queryOne();
         $this->assertEquals($intCol, $row['int_col']);

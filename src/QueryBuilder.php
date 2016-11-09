@@ -259,7 +259,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
             if ($value instanceof Expression) {
                 $columns[$name] = $this->convertExpression($value);
             } elseif (isset($columnSchemas[$name]) && in_array($columnSchemas[$name]->type, [Schema::TYPE_TEXT, Schema::TYPE_BINARY])) {
-                $columns[$name] = [$value, 'blob'];
+                $columns[$name] = [$value, \PDO::PARAM_LOB];
             }
         }
 
@@ -281,7 +281,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
             if ($value instanceof Expression) {
                 $columns[$name] = $this->convertExpression($value);
             } elseif (isset($columnSchemas[$name]) && in_array($columnSchemas[$name]->type, [Schema::TYPE_TEXT, Schema::TYPE_BINARY])) {
-                $columns[$name] = [$value, 'blob'];
+                $columns[$name] = [$value, \PDO::PARAM_LOB];
             }
         }
         return parent::update($table, $columns, $condition, $params);

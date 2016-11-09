@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "d853a2458335d5623479edd2605181e8",
-    "content-hash": "c90241625dd0178822920c62f73984d8",
+    "hash": "ad886ed4d6a7d2dd0492f67df9eb7f4d",
+    "content-hash": "5837130bf0009cd0fc2bb3d46dcbb47d",
     "packages": [
         {
             "name": "bower-asset/jquery",
@@ -299,16 +299,16 @@
         },
         {
             "name": "yiisoft/yii2-dev",
-            "version": "dev-master",
+            "version": "2.0.10",
             "source": {
                 "type": "git",
                 "url": "https://github.com/yiisoft/yii2.git",
-                "reference": "d50a06e4e770e3105131a9a4902e0d356b56dc3f"
+                "reference": "11fe407ad0af51765fbd35e008d0986f7f3bb840"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/yiisoft/yii2/zipball/d50a06e4e770e3105131a9a4902e0d356b56dc3f",
-                "reference": "d50a06e4e770e3105131a9a4902e0d356b56dc3f",
+                "url": "https://api.github.com/repos/yiisoft/yii2/zipball/11fe407ad0af51765fbd35e008d0986f7f3bb840",
+                "reference": "11fe407ad0af51765fbd35e008d0986f7f3bb840",
                 "shasum": ""
             },
             "require": {
@@ -403,7 +403,7 @@
                 "framework",
                 "yii2"
             ],
-            "time": "2016-11-08 13:22:30"
+            "time": "2016-10-20 12:02:50"
         }
     ],
     "packages-dev": [
@@ -1513,9 +1513,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "yiisoft/yii2-dev": 20
-    },
+    "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": [],

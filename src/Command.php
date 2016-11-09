@@ -16,21 +16,6 @@ class Command extends \yii\db\Command
 {
 
     /**
-     * @var array pending parameters to be bound to the current PDO statement.
-     */
-    private $_pendingParams = [];
-
-    /**
-     * @var string the SQL statement that this command represents
-     */
-    private $_sql;
-
-    /**
-     * @var string name of the table, which schema, should be refreshed after command execution.
-     */
-    private $_refreshTableName;
-
-    /**
      * Binds a parameter to the SQL statement to be executed.
      * @param string|integer $name parameter identifier. For a prepared statement
      * using named placeholders, this will be a parameter name of
@@ -45,34 +30,13 @@ class Command extends \yii\db\Command
      */
     public function bindParam($name, &$value, $dataType = null, $length = null, $driverOptions = null)
     {
+        if ($dataType === null) {
+            $dataType = $this->db->getSchema()->getPdoType($value);
+        }
         if ($dataType == \PDO::PARAM_BOOL) {
             $dataType = \PDO::PARAM_INT;
         }
         return parent::bindParam($name, $value, $dataType, $length, $driverOptions);
-    }
-    /**
-     * Binds pending parameters that were registered via [[bindValue()]] and [[bindValues()]].
-     * Note that this method requires an active [[pdoStatement]].
-     */
-    protected function bindPendingParams()
-    {
-        foreach ($this->_pendingParams as $name => $value) {
-            if ($value[1] == 'blob') {
-                $this->pdoStatement->bindParam($name, $value[0]);
-            } else {
-                $this->pdoStatement->bindValue($name, $value[0], $value[1]);
-            }
-        }
-        $this->_pendingParams = [];
-    }
-
-    /**
-     * Returns the SQL statement for this command.
-     * @return string the SQL statement to be executed
-     */
-    public function getSql()
-    {
-        return $this->_sql;
     }
 
     /**
@@ -83,8 +47,6 @@ class Command extends \yii\db\Command
      */
     public function setSql($sql)
     {
-        $refreshTableName = null;
-        
         $matches = null;
         if (preg_match("/^\s*DROP TABLE IF EXISTS (['\"]?([^\s\;]+)['\"]?);?\s*$/i", $sql, $matches)) {
             if ($this->db->getSchema()->getTableSchema($matches[2]) !== null) {
@@ -92,54 +54,9 @@ class Command extends \yii\db\Command
             } else {
                 $sql = 'select 1 from RDB$DATABASE;'; //Prevent Drop Table
             }
-            $refreshTableName = $matches[2];
         }
         
-        if ($sql !== $this->_sql) {
-            $this->cancel();
-            $this->_sql = $this->db->quoteSql($sql);
-            $this->_pendingParams = [];
-            $this->params = [];
-            $this->_refreshTableName = $refreshTableName;
-        }
-
-        return $this;
-    }
-
-    /**
-     * Returns the raw SQL by inserting parameter values into the corresponding placeholders in [[sql]].
-     * Note that the return value of this method should mainly be used for logging purpose.
-     * It is likely that this method returns an invalid SQL due to improper replacement of parameter placeholders.
-     * @return string the raw SQL with parameter values inserted into the corresponding placeholders in [[sql]].
-     */
-    public function getRawSql()
-    {
-        if (empty($this->params)) {
-            return $this->_sql;
-        }
-        $params = [];
-        foreach ($this->params as $name => $value) {
-            if (is_string($name) && strncmp(':', $name, 1)) {
-                $name = ':' . $name;
-            }
-            if (is_string($value)) {
-                $params[$name] = $this->db->quoteValue($value);
-            } elseif (is_bool($value)) {
-                $params[$name] = ($value ? 'TRUE' : 'FALSE');
-            } elseif ($value === null) {
-                $params[$name] = 'NULL';
-            } elseif (!is_object($value) && !is_resource($value)) {
-                $params[$name] = $value;
-            }
-        }
-        if (!isset($params[1])) {
-            return strtr($this->_sql, $params);
-        }
-        $sql = '';
-        foreach (explode('?', $this->_sql) as $i => $part) {
-            $sql .= (isset($params[$i]) ? $params[$i] : '') . $part;
-        }
-        return $sql;
+        return parent::setSql($sql);
     }
 
     /**
@@ -161,64 +78,7 @@ class Command extends \yii\db\Command
         if ($dataType == \PDO::PARAM_BOOL) {
             $dataType = \PDO::PARAM_INT;
         }
-        $this->_pendingParams[$name] = [$value, $dataType];
-        $this->params[$name] = $value;
 
-        return $this;
-    }
-
-    /**
-     * Binds a list of values to the corresponding parameters.
-     * This is similar to [[bindValue()]] except that it binds multiple values at a time.
-     * Note that the SQL data type of each value is determined by its PHP type.
-     * @param array $values the values to be bound. This must be given in terms of an associative
-     * array with array keys being the parameter names, and array values the corresponding parameter values,
-     * e.g. `[':name' => 'John', ':age' => 25]`. By default, the PDO type of each value is determined
-     * by its PHP type. You may explicitly specify the PDO type by using an array: `[value, type]`,
-     * e.g. `[':name' => 'John', ':profile' => [$profile, \PDO::PARAM_LOB]]`.
-     * @return static the current command being executed
-     */
-    public function bindValues($values)
-    {
-        if (empty($values)) {
-            return $this;
-        }
-
-        $schema = $this->db->getSchema();
-        foreach ($values as $name => $value) {
-            if (is_array($value)) {
-                $this->_pendingParams[$name] = $value;
-                $this->params[$name] = $value[0];
-            } else {
-                $type = $schema->getPdoType($value);
-                $this->_pendingParams[$name] = [$value, $type];
-                $this->params[$name] = $value;
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * Marks a specified table schema to be refreshed after command execution.
-     * @param string $name name of the table, which schema should be refreshed.
-     * @return $this this command instance
-     * @since 2.0.6
-     */
-    protected function requireTableSchemaRefresh($name)
-    {
-        $this->_refreshTableName = $name;
-        return $this;
-    }
-
-    /**
-     * Refreshes table schema, which was marked by [[requireTableSchemaRefresh()]]
-     * @since 2.0.6
-     */
-    protected function refreshTableSchema()
-    {
-        if ($this->_refreshTableName !== null) {
-            $this->db->getSchema()->refreshTableSchema($this->_refreshTableName);
-        }
+        return parent::bindValue($name, $value, $dataType);
     }
 }

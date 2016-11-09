@@ -68,23 +68,11 @@ class SchemaTest extends \yiiunit\framework\db\SchemaTest
         $columns['smallint_col']['dbType'] = 'smallint';
         $columns['smallint_col']['size'] = null;
         $columns['smallint_col']['precision'] = null;
-        
-        /**
-         * Removed blob support
-         * @see https://bugs.php.net/bug.php?id=61183
-         */
-//        $columns['char_col3']['dbType'] = 'blob sub_type text';
-        
-        $columns['char_col3']['dbType'] = 'varchar(255)';
-        $columns['char_col3']['type'] = 'string';
-        $columns['char_col3']['size'] = 255;
-        $columns['char_col3']['precision'] = 255;
-        $columns['blob_col']['dbType'] = 'varchar(255)';
-        $columns['blob_col']['phpType'] = 'string';
-        $columns['blob_col']['type'] = 'string';
-        $columns['blob_col']['size'] = 255;
-        $columns['blob_col']['precision'] = 255;
-        
+        $columns['char_col3']['dbType'] = 'blob sub_type text';
+        $columns['char_col3']['type'] = 'text';
+        $columns['blob_col']['dbType'] = 'blob';
+        $columns['blob_col']['phpType'] = 'resource';
+        $columns['blob_col']['type'] = 'binary';
         $columns['float_col']['dbType'] = 'double precision';
         $columns['float_col']['size'] = null;
         $columns['float_col']['precision'] = null;
