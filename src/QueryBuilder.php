@@ -179,7 +179,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
         // Otherwise apply the params and return the amended sql.
         if ($offset >= 0 && $limit >= 0) {
             $count = 1; //Only do it once
-            $sql = preg_replace('/^SELECT /i', 'SELECT FIRST ' . (int) $limit . ' SKIP ' . (int) $offset, $sql, $count);
+            $sql = preg_replace('/^SELECT /i', 'SELECT FIRST ' . (int) $limit . ' SKIP ' . (int) $offset . ' ', $sql, $count);
             return $sql;
         }
         // If we have fallen through the cracks then just pass
