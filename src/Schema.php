@@ -247,7 +247,7 @@ class Schema extends \yii\db\Schema
     {
         $c = $this->createColumnSchema();
         $c->name = strtolower(rtrim($column['fname']));
-        $c->allowNull = $column['fnull'] !== '1';
+        $c->allowNull = (int) $column['fnull'] !== 1;
         $c->isPrimaryKey = $column['fprimary'];
         $c->autoIncrement = (boolean) $column['fautoinc'];
         $c->comment = $column['fcomment'] === null ? '' : $column['fcomment'];
