@@ -69,7 +69,7 @@ install:
 
   #preparing Yii2 environment
   - travis_retry composer self-update && composer --version
-  - travis_retry composer global require "fxp/composer-asset-plugin:~1.1.3" --prefer-dist --no-interaction
+  - travis_retry composer global require "fxp/composer-asset-plugin:~1.2.2" --prefer-dist --no-interaction
   - export PATH="$HOME/.composer/vendor/bin:$PATH"
 
   #installing composer dependency
