@@ -16,8 +16,23 @@ env:
 # http://docs.travis-ci.com/user/build-configuration/#Rows-That-are-Allowed-To-Fail
 matrix:
   fast_finish: true
+  include:
+    - php: 7.0
+      env: FB=3.0
+    - php: 7.1
+      env: FB=3.0
+    - php: nightly
+      env: FB=3.0
+    - php: 7.0
+      env: FB=master
+    - php: 7.1
+      env: FB=master
+    - php: nightly
+      env: FB=master
   allow_failures:
     - php: nightly
+    - env: FB=3.0
+    - env: FB=master
 
 # faster builds on new travis setup not using sudo
 sudo: true
@@ -33,7 +48,7 @@ before_install:
   
   #installing and starting Firebird Server
   - sudo chmod +x tests/ci/travis/*.sh
-  - sudo tests/ci/travis/setup_firebird${FB}.sh
+  - sudo tests/ci/travis/setup_firebird_${FB}.sh
   - export PATH=$PATH:/usr/local/firebird/bin
 
   # initialize databases
