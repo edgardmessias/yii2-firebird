@@ -393,6 +393,37 @@ class QueryBuilder extends \yii\db\QueryBuilder
         . ' ALTER ' . $this->db->quoteColumnName($column)
         . (($hasType) ? ' TYPE ' : ' ') .  $this->getColumnType($type);
         
+        if (version_compare($this->db->firebird_version, '3.0.0', '>=')) {
+            $nullSql = false;
+            
+            if ($columnSchema->allowNull != $allowNullNewType) {
+                $nullSql = 'ALTER TABLE ' . $this->db->quoteTableName($table)
+                . ' ALTER ' . $this->db->quoteColumnName($column)
+                . ($allowNullNewType ? ' DROP' : ' SET')
+                . ' NOT NULL';
+            }
+
+            $sql = 'EXECUTE BLOCK AS BEGIN'
+                . ' EXECUTE STATEMENT ' . $this->db->quoteValue($baseSql) . ';';
+            
+            /**
+             * In any case (whichever option you choose), make sure that the column doesn't have any NULLs.
+             * Firebird will not check it for you. Later when you backup the database, everything is fine,
+             * but restore will fail as the NOT NULL column has NULLs in it. To be safe, each time you change from NULL to NOT NULL.
+             */
+            if (!$allowNullNewType) {
+                $sql .= ' UPDATE ' . $this->db->quoteTableName($table) . ' SET ' . $this->db->quoteColumnName($column) . ' = 0'
+                    . ' WHERE ' . $this->db->quoteColumnName($column) . ' IS NULL;';
+            }
+
+            if ($nullSql) {
+                $sql .= ' EXECUTE STATEMENT ' . $this->db->quoteValue($nullSql) . ';';
+            }
+
+            $sql .= ' END';
+            return $sql;
+        }
+
         if ($columnSchema->allowNull == $allowNullNewType) {
             return $baseSql;
         } else {

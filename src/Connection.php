@@ -14,7 +14,11 @@ namespace edgardmessias\db\firebird;
  */
 class Connection extends \yii\db\Connection
 {
-
+    /**
+     * Firebird server version
+     */
+    public $firebird_version = null;
+    
     /**
      * @inheritdoc
      */
@@ -69,5 +73,20 @@ class Connection extends \yii\db\Connection
             $this->_transaction = null;
         }
         parent::close();
+    }
+    
+    protected function initConnection()
+    {
+        parent::initConnection();
+        
+        if ($this->firebird_version) {
+            return;
+        }
+
+        $server_version = $this->pdo->getAttribute(\PDO::ATTR_SERVER_VERSION);
+        
+        if (preg_match('/WI-V(\d+\.\d+\.\d+).*remote server/', $server_version, $matches)) {
+            $this->firebird_version = $matches[1];
+        }
     }
 }
