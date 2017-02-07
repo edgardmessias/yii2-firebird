@@ -80,6 +80,8 @@ install:
   #needed to use tests of Yii2
   - rm vendor/yiisoft/yii2-dev -Rf
   - travis_retry composer install --prefer-source -o --no-interaction
+  #For timeout tests
+  - travis_retry composer require "phpunit/php-invoker" --prefer-dist --no-interaction
 
 before_script:
   # show some versions and env information
@@ -90,7 +92,7 @@ before_script:
       PHPUNIT_FLAGS="--coverage-clover=coverage.clover"
     fi
 script:
-  - vendor/bin/phpunit --verbose $PHPUNIT_FLAGS
+  - vendor/bin/phpunit --verbose $PHPUNIT_FLAGS --enforce-time-limit
 
 after_script:
   - |
