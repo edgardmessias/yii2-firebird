@@ -5,7 +5,10 @@ git clone --depth=1 -b master --single-branch https://github.com/FirebirdSQL/fir
 
 echo " ... Preparing source"
 cd firebird
-apt-get install -qq expect docbook docbook-to-man libatomic-ops-dev libbsd-dev libedit-dev libsp1c2 sgml-data sp libtommath-dev
+apt-get install -qq expect docbook docbook-to-man libatomic-ops-dev libbsd-dev libedit-dev libsp1c2 sgml-data sp libtommath-dev g++-4.8
+
+export CXX="g++-4.8"
+
 ./autogen.sh
 
 echo " ... Compiling source"

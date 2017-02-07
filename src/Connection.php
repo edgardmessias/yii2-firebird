@@ -85,7 +85,7 @@ class Connection extends \yii\db\Connection
 
         $server_version = $this->pdo->getAttribute(\PDO::ATTR_SERVER_VERSION);
         
-        if (preg_match('/\w{2}-V(\d+\.\d+\.\d+).*remote server/', $server_version, $matches)) {
+        if (preg_match('/\w{2}-[TV](\d+\.\d+\.\d+).*remote server/', $server_version, $matches)) {
             $this->firebird_version = $matches[1];
         }
     }
