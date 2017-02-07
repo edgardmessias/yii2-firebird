@@ -409,7 +409,7 @@ class Schema extends \yii\db\Schema
             }
             $constraints[$fkey['fconstraint']][$fkey['ffield']] = $fkey['pfield'];
         }
-        $table->foreignKeys = array_values($constraints);
+        $table->foreignKeys = $constraints;
     }
 
     protected function findTableNames($schema = '')

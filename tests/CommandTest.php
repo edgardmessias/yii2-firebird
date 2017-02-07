@@ -243,4 +243,50 @@ SQL;
         $command->execute();
         $this->assertEquals(3, $db->getSchema()->getLastInsertID('gen_profile_id'));
     }
+    
+    public function testInsertSelect()
+    {
+        $db = $this->getConnection(false);
+        
+        /**
+         * @see https://firebirdsql.org/file/documentation/reference_manuals/fblangref25-en/html/fblangref25-dml-insert.html#fblangref25-dml-insert-select-unstable
+         */
+        if (version_compare($db->firebird_version, '3.0.0', '<')) {
+            $this->markTestSkipped('Firebird < 3.0.0 has the "Unstable Cursor" problem');
+        }
+        parent::testInsertSelect();
+    }
+    
+    public function testInsertSelectAlias()
+    {
+        $db = $this->getConnection(false);
+        
+        /**
+         * @see https://firebirdsql.org/file/documentation/reference_manuals/fblangref25-en/html/fblangref25-dml-insert.html#fblangref25-dml-insert-select-unstable
+         */
+        if (version_compare($db->firebird_version, '3.0.0', '<')) {
+            $this->markTestSkipped('Firebird < 3.0.0 has the "Unstable Cursor" problem');
+        }
+        parent::testInsertSelectAlias();
+    }
+    
+    /**
+     * Test INSERT INTO ... SELECT SQL statement with wrong query object
+     *
+     * @dataProvider invalidSelectColumns
+     * @expectedException \yii\base\InvalidParamException
+     * @expectedExceptionMessage Expected select query object with enumerated (named) parameters
+     */
+    public function testInsertSelectFailed($invalidSelectColumns)
+    {
+        $db = $this->getConnection(false);
+        
+        /**
+         * @see https://firebirdsql.org/file/documentation/reference_manuals/fblangref25-en/html/fblangref25-dml-insert.html#fblangref25-dml-insert-select-unstable
+         */
+        if (version_compare($db->firebird_version, '3.0.0', '<')) {
+            $this->markTestSkipped('Firebird < 3.0.0 has the "Unstable Cursor" problem');
+        }
+        parent::testInsertSelectFailed($invalidSelectColumns);
+    }
 }

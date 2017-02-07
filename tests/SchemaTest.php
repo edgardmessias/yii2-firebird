@@ -41,20 +41,6 @@ class SchemaTest extends \yiiunit\framework\db\SchemaTest
         $this->assertEquals(255, $table->columns['type']->precision);
     }
 
-    public function testSingleFk()
-    {
-        /* @var $schema Schema */
-        $schema = $this->getConnection()->schema;
-        $table = $schema->getTableSchema('order_item');
-        $this->assertCount(2, $table->foreignKeys);
-        $this->assertTrue(isset($table->foreignKeys[0]));
-        $this->assertEquals('order', $table->foreignKeys[0][0]);
-        $this->assertEquals('id', $table->foreignKeys[0]['order_id']);
-        $this->assertTrue(isset($table->foreignKeys[1]));
-        $this->assertEquals('item', $table->foreignKeys[1][0]);
-        $this->assertEquals('id', $table->foreignKeys[1]['item_id']);
-    }
-
     public function getExpectedColumns()
     {
         $columns = parent::getExpectedColumns();
@@ -94,6 +80,20 @@ class SchemaTest extends \yiiunit\framework\db\SchemaTest
         return $columns;
     }
     
+    public function testCompositeFk()
+    {
+        /* @var $schema Schema */
+        $schema = $this->getConnection()->schema;
+
+        $table = $schema->getTableSchema('composite_fk');
+
+        $this->assertCount(1, $table->foreignKeys);
+        $this->assertTrue(isset($table->foreignKeys['fk_composite_fk_order_item']));
+        $this->assertEquals('order_item', $table->foreignKeys['fk_composite_fk_order_item'][0]);
+        $this->assertEquals('order_id', $table->foreignKeys['fk_composite_fk_order_item']['order_id']);
+        $this->assertEquals('item_id', $table->foreignKeys['fk_composite_fk_order_item']['item_id']);
+    }
+
     public function testGetPDOType()
     {
         $values = [

@@ -3,6 +3,7 @@
 namespace edgardmessias\unit\db\firebird;
 
 use edgardmessias\db\firebird\Schema;
+use yii\db\Expression;
 use yii\db\Query;
 use yiiunit\data\base\TraversableObject;
 
@@ -353,6 +354,23 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         $this->assertEquals(4, $this->getConnection(false)->getSchema()->insert('autoincrement_table', ['description' => 'auto increment 4'])['id']);
         
         $this->assertEquals(4, (new Query())->from('autoincrement_table')->max('id', $this->getConnection(false)));
+    }
+
+    public function batchInsertProvider()
+    {
+        $tests = parent::batchInsertProvider();
+        
+        foreach ($tests as &$test) {
+            $index = isset($test['expected']) ? 'expected' : 3;
+
+            if ($test[$index]) {
+                $test[$index] = 'EXECUTE block AS BEGIN ' . $test[$index] . '; END;';
+            }
+        }
+        
+        $tests['escape-danger-chars']['expected'] = "EXECUTE block AS BEGIN INSERT INTO customer (address) VALUES ('SQL-danger chars are escaped: ''); --'); END;";
+        
+        return $tests;
     }
 
     public function testCommentColumn()

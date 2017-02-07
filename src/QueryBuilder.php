@@ -9,6 +9,7 @@
 namespace edgardmessias\db\firebird;
 
 use yii\base\InvalidParamException;
+use yii\base\NotSupportedException;
 use yii\db\Expression;
 use yii\db\Query;
 
@@ -255,15 +256,32 @@ class QueryBuilder extends \yii\db\QueryBuilder
             }
         }
 
-        foreach ($columns as $name => $value) {
-            if ($value instanceof Expression) {
-                $columns[$name] = $this->convertExpression($value);
-            } elseif (isset($columnSchemas[$name]) && in_array($columnSchemas[$name]->type, [Schema::TYPE_TEXT, Schema::TYPE_BINARY])) {
-                $columns[$name] = [$value, \PDO::PARAM_LOB];
+        if (is_array($columns)) {
+            foreach ($columns as $name => $value) {
+                if ($value instanceof Expression) {
+                    $columns[$name] = $this->convertExpression($value);
+                } elseif (isset($columnSchemas[$name]) && in_array($columnSchemas[$name]->type, [Schema::TYPE_TEXT, Schema::TYPE_BINARY])) {
+                    $columns[$name] = [$value, \PDO::PARAM_LOB];
+                }
             }
         }
 
         return parent::insert($table, $columns, $params);
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    protected function prepareInsertSelectSubQuery($columns, $schema)
+    {
+        /**
+         * @see https://firebirdsql.org/file/documentation/reference_manuals/fblangref25-en/html/fblangref25-dml-insert.html#fblangref25-dml-insert-select-unstable
+         */
+        if (version_compare($this->db->firebird_version, '3.0.0', '<')) {
+            throw new NotSupportedException('Firebird < 3.0.0 has the "Unstable Cursor" problem');
+        }
+
+        return parent::prepareInsertSelectSubQuery($columns, $schema);
     }
 
     /**
