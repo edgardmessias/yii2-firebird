@@ -29,5 +29,20 @@
         "psr-4": {
             "edgardmessias\\db\\firebird\\": "src"
         }
+    },
+    "config": {
+        "platform": {
+            "php": "5.4"
+        }
+    },
+    "extra": {
+        "asset-installer-paths": {
+            "npm-asset-library": "vendor/npm",
+            "bower-asset-library": "vendor/bower"
+        },
+        "asset-vcs-driver-options": {
+            "github-no-api": true
+        },
+        "asset-pattern-skip-version": "(-build|-patch)"
     }
 }

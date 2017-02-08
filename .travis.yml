@@ -66,6 +66,11 @@ before_install:
   - (cd php-src/ext/pdo_firebird/; phpize && ./configure && make && sudo make install)
 
 install:
+  - |
+    if [ $TRAVIS_PHP_VERSION = '7.0' ] && [ $FB = '2.5' ]; then
+      # disable xdebug for performance reasons when code coverage is not needed. note: xdebug on hhvm is disabled by default
+      phpenv config-rm xdebug.ini || echo "xdebug is not installed"
+    fi
   #enabling pdo_firebird
   - echo "extension=pdo_firebird.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - php -m | grep -i pdo
@@ -77,11 +82,8 @@ install:
 
   #installing composer dependency
   - travis_retry composer install --prefer-dist --no-interaction
-  #needed to use tests of Yii2
-  - rm vendor/yiisoft/yii2-dev -Rf
-  - travis_retry composer install --prefer-source -o --no-interaction
   #For timeout tests
-  - travis_retry composer require "phpunit/php-invoker" --prefer-dist --no-interaction
+  - travis_retry composer require "phpunit/php-invoker" --dev --prefer-dist --no-interaction
 
 before_script:
   # show some versions and env information

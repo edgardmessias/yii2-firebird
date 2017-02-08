@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "0a648b9f2d4326622ff09acc66a10dea",
+    "content-hash": "7f3a26c063fcfef146003c4a53f266d6",
     "packages": [
         {
             "name": "bower-asset/jquery",
@@ -42,12 +42,12 @@
             "version": "3.3.4",
             "source": {
                 "type": "git",
-                "url": "https://github.com/RobinHerbots/Inputmask.git",
+                "url": "https://github.com/RobinHerbots/jquery.inputmask.git",
                 "reference": "8a882bc471ba4077c4f8ecbe3d9d61c7558f3ef2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/RobinHerbots/Inputmask/zipball/8a882bc471ba4077c4f8ecbe3d9d61c7558f3ef2",
+                "url": "https://api.github.com/repos/RobinHerbots/jquery.inputmask/zipball/8a882bc471ba4077c4f8ecbe3d9d61c7558f3ef2",
                 "reference": "8a882bc471ba4077c4f8ecbe3d9d61c7558f3ef2",
                 "shasum": ""
             },
@@ -308,16 +308,16 @@
         },
         {
             "name": "yiisoft/yii2-dev",
-            "version": "2.0.11.1",
+            "version": "2.0.11.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/yiisoft/yii2.git",
-                "reference": "2cce93adaef0aaef304130d4a1a49064643767f1"
+                "reference": "278548029a071648c440670ebb16dca1b32421e3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/yiisoft/yii2/zipball/2cce93adaef0aaef304130d4a1a49064643767f1",
-                "reference": "2cce93adaef0aaef304130d4a1a49064643767f1",
+                "url": "https://api.github.com/repos/yiisoft/yii2/zipball/278548029a071648c440670ebb16dca1b32421e3",
+                "reference": "278548029a071648c440670ebb16dca1b32421e3",
                 "shasum": ""
             },
             "require": {
@@ -422,7 +422,7 @@
                 "framework",
                 "yii2"
             ],
-            "time": "2017-02-02T18:53:16+00:00"
+            "time": "2017-02-08T09:04:32+00:00"
         }
     ],
     "packages-dev": [
