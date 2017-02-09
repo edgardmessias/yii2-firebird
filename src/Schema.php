@@ -168,7 +168,14 @@ class Schema extends \yii\db\Schema
                     fld.rdb$field_precision AS fprecision,
                     rel.rdb$null_flag AS fnull,
                     rel.rdb$description AS fcomment,
-                    fld.rdb$default_value AS fdefault_value,
+                    fld.rdb$default_value AS fdefault_value,';
+
+        if (version_compare($this->db->firebird_version, '3.0.0', '>=')) {
+            $sql .= '
+                    rel.rdb$generator_name AS fgenerator_name,';
+        }
+        
+        $sql .= '
                     (SELECT RDB$TRIGGER_SOURCE FROM RDB$TRIGGERS
                         WHERE RDB$SYSTEM_FLAG = 0
                         AND UPPER(RDB$RELATION_NAME)=UPPER(\'' . $table->name . '\')
@@ -214,7 +221,10 @@ class Schema extends \yii\db\Schema
             $c = $this->loadColumnSchema($column);
             if ($table->sequenceName === null && $c->autoIncrement) {
                 $matches = [];
-                if (preg_match("/NEW.{$c->name}\s*=\s*GEN_ID\((\w+)/i", $column['fautoinc'], $matches)) {
+                
+                if (isset($column['fgenerator_name']) && $column['fgenerator_name']) {
+                    $table->sequenceName = $column['fgenerator_name'];
+                } elseif (preg_match("/NEW.{$c->name}\s*=\s*GEN_ID\((\w+)/i", $column['fautoinc'], $matches)) {
                     $table->sequenceName = $matches[1];
                 } elseif (preg_match("/NEW.{$c->name}\s*=\s*NEXT\s+VALUE\s+FOR\s+(\w+)/i", $column['fautoinc'], $matches)) {
                     $table->sequenceName = $matches[1];
@@ -249,7 +259,7 @@ class Schema extends \yii\db\Schema
         $c->name = strtolower(rtrim($column['fname']));
         $c->allowNull = (int) $column['fnull'] !== 1;
         $c->isPrimaryKey = $column['fprimary'];
-        $c->autoIncrement = (boolean) $column['fautoinc'];
+        $c->autoIncrement = (isset($column['fgenerator_name']) && $column['fgenerator_name']) || (boolean) $column['fautoinc'];
         $c->comment = $column['fcomment'] === null ? '' : $column['fcomment'];
 
         $c->type = self::TYPE_STRING;

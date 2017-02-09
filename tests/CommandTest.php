@@ -231,7 +231,8 @@ SQL;
 
     public function testRenameTable()
     {
-        $this->markTestSkipped('firebird does not support rename table');
+        $this->setExpectedException('\yii\base\NotSupportedException');
+        parent::testRenameTable();
     }
 
     public function testLastInsertId()
@@ -252,7 +253,7 @@ SQL;
          * @see https://firebirdsql.org/file/documentation/reference_manuals/fblangref25-en/html/fblangref25-dml-insert.html#fblangref25-dml-insert-select-unstable
          */
         if (version_compare($db->firebird_version, '3.0.0', '<')) {
-            $this->markTestSkipped('Firebird < 3.0.0 has the "Unstable Cursor" problem');
+            $this->setExpectedException('\yii\base\NotSupportedException', 'Firebird < 3.0.0 has the "Unstable Cursor" problem');
         }
         parent::testInsertSelect();
     }
@@ -265,7 +266,7 @@ SQL;
          * @see https://firebirdsql.org/file/documentation/reference_manuals/fblangref25-en/html/fblangref25-dml-insert.html#fblangref25-dml-insert-select-unstable
          */
         if (version_compare($db->firebird_version, '3.0.0', '<')) {
-            $this->markTestSkipped('Firebird < 3.0.0 has the "Unstable Cursor" problem');
+            $this->setExpectedException('\yii\base\NotSupportedException', 'Firebird < 3.0.0 has the "Unstable Cursor" problem');
         }
         parent::testInsertSelectAlias();
     }
@@ -285,8 +286,19 @@ SQL;
          * @see https://firebirdsql.org/file/documentation/reference_manuals/fblangref25-en/html/fblangref25-dml-insert.html#fblangref25-dml-insert-select-unstable
          */
         if (version_compare($db->firebird_version, '3.0.0', '<')) {
-            $this->markTestSkipped('Firebird < 3.0.0 has the "Unstable Cursor" problem');
+            $this->setExpectedException('\yii\base\NotSupportedException', 'Firebird < 3.0.0 has the "Unstable Cursor" problem');
         }
         parent::testInsertSelectFailed($invalidSelectColumns);
+    }
+    
+    public function testAutoRefreshTableSchema()
+    {
+        $db = $this->getConnection(false);
+
+        if ($db->getSchema()->getTableSchema('test') !== null) {
+            $db->createCommand()->dropTable('test')->execute();
+        }
+
+        parent::testAutoRefreshTableSchema();
     }
 }
