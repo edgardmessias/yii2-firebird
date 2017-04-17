@@ -21,16 +21,17 @@ Requirements
 
 At least Firebird version 2.0 is required. However, in order to use all extension features.
 
-Not work with Firebird 3.0 [See this bug](https://bugs.php.net/bug.php?id=72931)
+Partial support with Firebird 3.0
 
 Unsupported
 ------------
 
 Functions not supported by the Firebird database:
 
- * Rename Table
- * Check Integrity
+ * Rename Table - [See this FAQ](http://www.firebirdfaq.org/faq363/)
+ * Check Integrity - [Track](http://tracker.firebirdsql.org/browse/CORE-1924)
  * BLOB data type for pdo_firebird <= 7.0.13 - [See this bug](https://bugs.php.net/bug.php?id=61183)
+ * BOOLEAN data type for pdo_firebird - [See this bug](https://bugs.php.net/bug.php?id=74462)
 
 Installation
 ------------
@@ -39,7 +40,7 @@ The preferred way to install this extension is through [composer](http://getcomp
 
 Either run
 
-```
+```bash
 php composer.phar require --prefer-dist "edgardmessias/yii2-firebird:*"
 ```
 
