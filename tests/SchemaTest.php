@@ -77,6 +77,17 @@ class SchemaTest extends \yiiunit\framework\db\SchemaTest
         $columns['bit_col']['dbType'] = 'smallint';
         $columns['bit_col']['size'] = null;
         $columns['bit_col']['precision'] = null;
+
+        $db = $this->getConnection(false);
+        if (version_compare($db->firebird_version, '3.0.0', '>=')) {
+            $columns['bool_col']['type'] = 'boolean';
+            $columns['bool_col']['dbType'] = 'boolean';
+            $columns['bool_col']['phpType'] = 'boolean';
+            $columns['bool_col2']['type'] = 'boolean';
+            $columns['bool_col2']['dbType'] = 'boolean';
+            $columns['bool_col2']['phpType'] = 'boolean';
+            $columns['bool_col2']['defaultValue'] = true;
+        }
         return $columns;
     }
     

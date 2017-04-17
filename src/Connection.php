@@ -17,7 +17,7 @@ class Connection extends \yii\db\Connection
     /**
      * Firebird server version
      */
-    public $firebird_version = null;
+    private $_firebird_version = null;
     
     /**
      * @inheritdoc
@@ -75,20 +75,26 @@ class Connection extends \yii\db\Connection
         parent::close();
     }
     
-    public function init()
+    public function getFirebird_version()
     {
-        parent::init();
-        
-        if ($this->firebird_version) {
-            return;
-        }
-        
-        $pdo = $this->createPdoInstance();
+        if (!$this->_firebird_version) {
+            $pdo = $this->pdo;
+            if (!$pdo) {
+                $pdo = $this->createPdoInstance();
+            }
 
-        $server_version = $pdo->getAttribute(\PDO::ATTR_SERVER_VERSION);
-        
-        if (preg_match('/\w{2}-[TV](\d+\.\d+\.\d+).*remote server/', $server_version, $matches)) {
-            $this->firebird_version = $matches[1];
+            $server_version = $pdo->getAttribute(\PDO::ATTR_SERVER_VERSION);
+
+            if (preg_match('/\w{2}-[TV](\d+\.\d+\.\d+).*remote server/', $server_version, $matches)) {
+                $this->_firebird_version = $matches[1];
+            }
         }
+        return $this->_firebird_version;
     }
+
+    public function setFirebird_version($value)
+    {
+        $this->_firebird_version = $value;
+    }
+
 }

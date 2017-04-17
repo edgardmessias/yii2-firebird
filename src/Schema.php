@@ -62,6 +62,14 @@ class Schema extends \yii\db\Schema
         'double precision'   => self::TYPE_DOUBLE,
         'smallint'           => self::TYPE_SMALLINT,
     ];
+    
+    public function init() {
+        parent::init();
+        
+        if(version_compare($this->db->firebird_version, '3.0.0', '>=')){
+            $this->typeMap['boolean'] = self::TYPE_BOOLEAN;
+        }
+    }
 
     /**
      * Creates a query builder for the database.
@@ -285,6 +293,7 @@ class Schema extends \yii\db\Schema
             10  => 'FLOAT',
             11  => 'D_FLOAT',
             17  => 'BOOLEAN',
+            23  => 'BOOLEAN',
             27  => 'DOUBLE PRECISION',
             12  => 'DATE',
             13  => 'TIME',

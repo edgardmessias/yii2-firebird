@@ -58,4 +58,16 @@ class ColumnSchema extends \yii\db\ColumnSchema
 
         return $value;
     }
+    
+    public function dbTypecast($value) {
+        $r = parent::dbTypecast($value);
+        
+        if ($r === true) {
+            return 'true';
+        } elseif ($r === false){
+            return 'false';
+        }
+        
+        return $r;
+    }
 }

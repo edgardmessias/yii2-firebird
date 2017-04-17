@@ -323,6 +323,7 @@ smallint_col smallint default '-123',
   numeric_col decimal(5,2) default '-33.22'
 );
 -- SQL
+-- < 3.0.0
 CREATE TABLE type (
   int_col INTEGER NOT NULL,
   int_col2 INTEGER DEFAULT '1',
@@ -337,6 +338,26 @@ CREATE TABLE type (
   "time" TIMESTAMP DEFAULT '2002-01-01 00:00:00' NOT NULL,
   bool_col SMALLINT NOT NULL,
   bool_col2 SMALLINT DEFAULT '1',
+  ts_default TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  bit_col SMALLINT DEFAULT '130' NOT NULL
+
+);
+-- SQL
+-- >= 3.0.0
+CREATE TABLE type (
+  int_col INTEGER NOT NULL,
+  int_col2 INTEGER DEFAULT '1',
+  smallint_col SMALLINT DEFAULT '1',
+  char_col char(100) NOT NULL,
+  char_col2 varchar(100) DEFAULT 'something',
+  char_col3 blob sub_type text,
+  float_col DOUBLE PRECISION NOT NULL,
+  float_col2 DOUBLE PRECISION DEFAULT '1.23',
+  blob_col blob,
+  numeric_col decimal(5,2) DEFAULT '33.22',
+  "time" TIMESTAMP DEFAULT '2002-01-01 00:00:00' NOT NULL,
+  bool_col BOOLEAN NOT NULL,
+  bool_col2 BOOLEAN DEFAULT TRUE,
   ts_default TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   bit_col SMALLINT DEFAULT '130' NOT NULL
 

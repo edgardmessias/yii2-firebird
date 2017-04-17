@@ -47,8 +47,15 @@ trait FirebirdTestTrait
         if ($fixture !== null) {
             $lines = explode('-- SQL', file_get_contents($fixture));
             foreach ($lines as $line) {
-                if (trim($line) !== '') {
-                    $db->pdo->exec($line);
+                $line = trim($line);
+                if ($line !== '') {
+                    if(preg_match('/^\-\-\s+([\<\>\=]+)\s+(\d+(\.\d+)*)/', $line, $matches)){
+                        if(version_compare($db->firebird_version, $matches[2], $matches[1])){
+                            $db->pdo->exec($line);
+                        }
+                    } else {
+                        $db->pdo->exec($line);
+                    }
                 }
             }
             //Unlock resources of table modification.

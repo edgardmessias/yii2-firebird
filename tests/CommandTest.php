@@ -107,7 +107,7 @@ SQL;
 
         $this->assertEquals($blobCol, $row['blob_col']);
         $this->assertEquals($numericCol, $row['numeric_col']);
-        $this->assertEquals($boolCol, (int) $row['bool_col']);
+        $this->assertEquals($boolCol, $row['bool_col']);
 
         // bindValue
         $sql = 'INSERT INTO {{customer}}([[email]], [[name]], [[address]]) VALUES (:email, \'user5\', \'address5\')';
