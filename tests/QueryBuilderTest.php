@@ -381,6 +381,14 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         
         $tests['escape-danger-chars']['expected'] = "EXECUTE block AS BEGIN INSERT INTO customer (address) VALUES ('SQL-danger chars are escaped: ''); --'); END;";
         
+        //Need to load configutarion with @dataProvider
+        $this->setUp();
+
+        $db = $this->getConnection(false, true);
+        if (version_compare($db->firebird_version, '3.0.0', '>=')) {
+            $tests['bool-false, bool2-null']['expected'] = "EXECUTE block AS BEGIN INSERT INTO type (bool_col, bool_col2) VALUES ('false', NULL); END;";
+        }
+
         return $tests;
     }
 
