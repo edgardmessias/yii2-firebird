@@ -63,10 +63,11 @@ class Schema extends \yii\db\Schema
         'smallint'           => self::TYPE_SMALLINT,
     ];
     
-    public function init() {
+    public function init()
+    {
         parent::init();
         
-        if(version_compare($this->db->firebird_version, '3.0.0', '>=')){
+        if (version_compare($this->db->firebird_version, '3.0.0', '>=')) {
             $this->typeMap['boolean'] = self::TYPE_BOOLEAN;
         }
     }

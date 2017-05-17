@@ -49,8 +49,8 @@ trait FirebirdTestTrait
             foreach ($lines as $line) {
                 $line = trim($line);
                 if ($line !== '') {
-                    if(preg_match('/^\-\-\s+([\<\>\=]+)\s+(\d+(\.\d+)*)/', $line, $matches)){
-                        if(version_compare($db->firebird_version, $matches[2], $matches[1])){
+                    if (preg_match('/^\-\-\s+([\<\>\=]+)\s+(\d+(\.\d+)*)/', $line, $matches)) {
+                        if (version_compare($db->firebird_version, $matches[2], $matches[1])) {
                             $db->pdo->exec($line);
                         }
                     } else {

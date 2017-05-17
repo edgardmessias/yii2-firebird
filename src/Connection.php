@@ -96,5 +96,4 @@ class Connection extends \yii\db\Connection
     {
         $this->_firebird_version = $value;
     }
-
 }
