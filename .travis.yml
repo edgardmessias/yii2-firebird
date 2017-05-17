@@ -32,6 +32,11 @@ matrix:
     - php: nightly
       env: FB=master
       dist: trusty
+    #See https://github.com/php/php-src/pull/2522
+    - php: 7.0
+      env: FB=3.0 REPO=https://github.com/madorin/php-src.git BRANCH=fb_bool
+    - php: 7.1
+      env: FB=3.0 REPO=https://github.com/madorin/php-src.git BRANCH=fb_bool
   allow_failures:
     - php: nightly
     - env: FB=3.0
@@ -60,9 +65,10 @@ before_install:
   - cat /tmp/create_test.sql
 
   #build pdo_firebird
-  - export BRANCH=PHP-$(phpenv version-name)
+  - export BRANCH=${BRANCH:=PHP-$(phpenv version-name)}
+  - export REPO=${REPO:=https://github.com/php/php-src.git}
   - if [[ $(phpenv version-name) == "nightly" ]]; then export BRANCH=master; fi
-  - travis_retry git clone --depth=1 -b ${BRANCH} --single-branch https://github.com/php/php-src.git
+  - travis_retry git clone --depth=1 -b $BRANCH --single-branch $REPO
   - (cd php-src/ext/pdo_firebird/; phpize && ./configure && make && sudo make install)
 
 install:
