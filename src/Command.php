@@ -14,6 +14,12 @@ namespace edgardmessias\db\firebird;
  */
 class Command extends \yii\db\Command
 {
+    
+    /**
+     * Used to prevent bindParam change the user value
+     * @var array
+     */
+    private $_boolParams = [];
 
     /**
      * Binds a parameter to the SQL statement to be executed.
@@ -33,8 +39,15 @@ class Command extends \yii\db\Command
         if ($dataType === null) {
             $dataType = $this->db->getSchema()->getPdoType($value);
         }
-        if ($dataType == \PDO::PARAM_BOOL) {
-            $dataType = \PDO::PARAM_INT;
+        
+        /**
+         * PDO_FIREBIRD accept only 'true' and 'false' strings for booleans
+         */
+        if ($dataType == \PDO::PARAM_BOOL && !in_array($value, ['true', 'false'], true)) {
+            $boolValue = boolval($value) ? 'true' : 'false';
+            $this->_boolParams[] = [&$value, &$boolValue];
+
+            return parent::bindParam($name, $boolValue, $dataType, $length, $driverOptions);
         }
         return parent::bindParam($name, $value, $dataType, $length, $driverOptions);
     }
@@ -75,10 +88,33 @@ class Command extends \yii\db\Command
         if ($dataType === null) {
             $dataType = $this->db->getSchema()->getPdoType($value);
         }
-        if ($dataType == \PDO::PARAM_BOOL) {
-            $dataType = \PDO::PARAM_INT;
+        if ($dataType == \PDO::PARAM_BOOL && !in_array($value, ['true', 'false'], true)) {
+            $value = boolval($value) ? 'true' : 'false';
         }
 
         return parent::bindValue($name, $value, $dataType);
+    }
+    
+    /**
+     * Executes the SQL statement.
+     * This method should only be used for executing non-query SQL statement, such as `INSERT`, `DELETE`, `UPDATE` SQLs.
+     * No result set will be returned.
+     * @return int number of rows affected by the execution.
+     * @throws Exception execution failed
+     */
+    public function execute()
+    {
+        /**
+         * Rebind boolean parameters
+         */
+        foreach ($this->_boolParams as &$param) {
+            if (!in_array($param[0], ['true', 'false'], true)) {
+                $param[1] = boolval($param[0]) ? 'true' : 'false';
+            } else {
+                $param[1] = clone $param[0];
+            }
+        }
+        
+        return parent::execute();
     }
 }
