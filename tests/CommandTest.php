@@ -101,14 +101,16 @@ SQL;
         /**
          * Test boolean reference
          */
-        $boolCol = true;
-        $this->assertEquals(1, $command->execute());
+        if (version_compare($db->firebird_version, '3.0.0', '>=')) {
+            $boolCol = true;
+            $this->assertEquals(1, $command->execute());
 
-        $boolCol = false;
-        $this->assertEquals(1, $command->execute());
-        
-        $bools = $db->createCommand('SELECT [[bool_col]] FROM {{type}}')->queryColumn();
-        $this->assertArraySubset([false, true, false], $bools, true);
+            $boolCol = false;
+            $this->assertEquals(1, $command->execute());
+
+            $bools = $db->createCommand('SELECT [[bool_col]] FROM {{type}}')->queryColumn();
+            $this->assertArraySubset([false, true, false], $bools, true);
+        }
         
         $command = $db->createCommand('SELECT [[int_col]], [[char_col]], [[float_col]], [[blob_col]], [[numeric_col]], [[bool_col]] FROM {{type}}');
         

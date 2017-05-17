@@ -20,6 +20,19 @@ class Command extends \yii\db\Command
      * @var array
      */
     private $_boolParams = [];
+    
+    private function convertBoolean(&$value, &$dataType = null)
+    {
+        if (version_compare($this->db->firebird_version, '3.0.0', '>=')) {
+            if (!in_array($value, ['true', 'false'], true)) {
+                return boolval($value) ? 'true' : 'false';
+            }
+            return clone $value;
+        }
+        
+        $dataType = \PDO::PARAM_INT;
+        return boolval($value) ? 1 : 0;
+    }
 
     /**
      * Binds a parameter to the SQL statement to be executed.
@@ -43,8 +56,8 @@ class Command extends \yii\db\Command
         /**
          * PDO_FIREBIRD accept only 'true' and 'false' strings for booleans
          */
-        if ($dataType == \PDO::PARAM_BOOL && !in_array($value, ['true', 'false'], true)) {
-            $boolValue = boolval($value) ? 'true' : 'false';
+        if ($dataType == \PDO::PARAM_BOOL) {
+            $boolValue = $this->convertBoolean($value, $dataType);
             $this->_boolParams[] = [&$value, &$boolValue];
 
             return parent::bindParam($name, $boolValue, $dataType, $length, $driverOptions);
@@ -88,8 +101,8 @@ class Command extends \yii\db\Command
         if ($dataType === null) {
             $dataType = $this->db->getSchema()->getPdoType($value);
         }
-        if ($dataType == \PDO::PARAM_BOOL && !in_array($value, ['true', 'false'], true)) {
-            $value = boolval($value) ? 'true' : 'false';
+        if ($dataType == \PDO::PARAM_BOOL) {
+            $value = $this->convertBoolean($value, $dataType);
         }
 
         return parent::bindValue($name, $value, $dataType);
@@ -108,11 +121,7 @@ class Command extends \yii\db\Command
          * Rebind boolean parameters
          */
         foreach ($this->_boolParams as &$param) {
-            if (!in_array($param[0], ['true', 'false'], true)) {
-                $param[1] = boolval($param[0]) ? 'true' : 'false';
-            } else {
-                $param[1] = clone $param[0];
-            }
+            $param[1] = $this->convertBoolean($param[0]);
         }
         
         return parent::execute();
