@@ -321,7 +321,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
     /**
      * @inheritdoc
      */
-    public function batchInsert($table, $columns, $rows)
+    public function batchInsert($table, $columns, $rows, &$params = [])
     {
         if (empty($rows)) {
             return '';
@@ -347,7 +347,9 @@ class QueryBuilder extends \yii\db\QueryBuilder
                     $value = 0;
                 } elseif ($value === null) {
                     $value = 'NULL';
-                }
+                } elseif ($value instanceof ExpressionInterface) {
+                    $value = $this->buildExpression($value, $params);
+		}
                 $vs[] = $value;
             }
             $values[] = 'INSERT INTO ' . $schema->quoteTableName($table)
