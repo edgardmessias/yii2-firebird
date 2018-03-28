@@ -21,12 +21,16 @@ matrix:
   include:
     - php: 7.0
       env: FB=3.0
+      dist: trusty
     - php: 7.1
       env: FB=3.0
+      dist: trusty
     - php: 7.2
       env: FB=3.0
+      dist: trusty
     - php: nightly
       env: FB=3.0
+      dist: trusty
     - php: 7.0
       env: FB=master
       dist: trusty
