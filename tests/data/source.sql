@@ -111,6 +111,36 @@ END;
 -- SQL
 EXECUTE block AS
 BEGIN
+    IF (EXISTS(SELECT 1 FROM rdb$relations WHERE LOWER(rdb$relation_name) = 't_constraints_4')) THEN 
+        EXECUTE STATEMENT 'DROP TABLE t_constraints_4;';
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
+    IF (EXISTS(SELECT 1 FROM rdb$relations WHERE LOWER(rdb$relation_name) = 't_constraints_3')) THEN 
+        EXECUTE STATEMENT 'DROP TABLE t_constraints_3;';
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
+    IF (EXISTS(SELECT 1 FROM rdb$relations WHERE LOWER(rdb$relation_name) = 't_constraints_2')) THEN 
+        EXECUTE STATEMENT 'DROP TABLE t_constraints_2;';
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
+    IF (EXISTS(SELECT 1 FROM rdb$relations WHERE LOWER(rdb$relation_name) = 't_constraints_1')) THEN 
+        EXECUTE STATEMENT 'DROP TABLE t_constraints_1;';
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
+    IF (EXISTS(SELECT 1 FROM rdb$relations WHERE LOWER(rdb$relation_name) = 't_upsert')) THEN 
+        EXECUTE STATEMENT 'DROP TABLE t_upsert;';
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
     IF (EXISTS(SELECT 1 FROM rdb$generators WHERE LOWER(rdb$generator_name) = 'seq_null_values_id')) THEN 
         EXECUTE STATEMENT 'DROP SEQUENCE seq_null_values_id;';
 END;
@@ -167,6 +197,12 @@ EXECUTE block AS
 BEGIN
     IF (EXISTS(SELECT 1 FROM rdb$generators WHERE LOWER(rdb$generator_name) = 'seq_comment_id')) THEN 
         EXECUTE STATEMENT 'DROP GENERATOR seq_comment_id;';
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
+    IF (EXISTS(SELECT 1 FROM rdb$generators WHERE LOWER(rdb$generator_name) = 'gen_t_upsert_id')) THEN 
+        EXECUTE STATEMENT 'DROP GENERATOR gen_t_upsert_id;';
 END;
 -- SQL
 CREATE TABLE constraints (
@@ -316,7 +352,8 @@ BEGIN
 END
 -- SQL
 CREATE TABLE negative_default_values (
-smallint_col smallint default '-123',
+  tinyint_col smallint default '-123',
+  smallint_col smallint default '-123',
   int_col integer default '-123',
   bigint_col bigint default '-123',
   float_col double precision default '-12345.6789',
@@ -523,3 +560,64 @@ CREATE UNIQUE INDEX uniqueB ON unique_values (b);
 CREATE UNIQUE INDEX uniqueBC ON unique_values (b, c);
 -- SQL
 CREATE UNIQUE INDEX uniqueABC ON unique_values (a, b, c);
+-- SQL
+CREATE TABLE t_constraints_1
+(
+    c_id INT NOT NULL PRIMARY KEY,
+    c_not_null INT NOT NULL,
+    c_check VARCHAR(255) CHECK (c_check <> '') NULL,
+    c_unique INT NOT NULL,
+    c_default INT DEFAULT 0 NOT NULL,
+    CONSTRAINT cn_unique UNIQUE (c_unique)
+);
+-- SQL
+CREATE TABLE t_constraints_2
+(
+    c_id_1 INT NOT NULL,
+    c_id_2 INT NOT NULL,
+    c_index_1 INT,
+    c_index_2_1 INT,
+    c_index_2_2 INT,
+    CONSTRAINT cn_constraints_2_multi UNIQUE (c_index_2_1, c_index_2_2),
+    CONSTRAINT cn_pk PRIMARY KEY (c_id_1, c_id_2)
+);
+-- SQL
+CREATE INDEX cn_constraints_2_single ON t_constraints_2 (c_index_1);
+-- SQL
+CREATE TABLE t_constraints_3
+(
+    c_id INT NOT NULL,
+    c_fk_id_1 INT NOT NULL,
+    c_fk_id_2 INT NOT NULL,
+    CONSTRAINT cn_constraints_3 FOREIGN KEY (c_fk_id_1, c_fk_id_2) REFERENCES t_constraints_2 (c_id_1, c_id_2) ON DELETE CASCADE ON UPDATE CASCADE
+);
+-- SQL
+CREATE TABLE t_constraints_4
+(
+    c_id INT NOT NULL PRIMARY KEY,
+    c_col_1 INT,
+    c_col_2 INT NOT NULL,
+    CONSTRAINT cn_constraints_4 UNIQUE (c_col_1, c_col_2)
+);
+-- SQL
+CREATE TABLE t_upsert
+(
+    id INTEGER NOT NULL PRIMARY KEY,
+    ts INT,
+    email VARCHAR(128) NOT NULL UNIQUE,
+    recovery_email VARCHAR(128),
+    address blob sub_type text,
+    status SMALLINT DEFAULT 0 NOT NULL,
+    orders INT DEFAULT 0 NOT NULL,
+    profile_id INT,
+    UNIQUE (email, recovery_email)
+);
+-- SQL
+CREATE GENERATOR gen_t_upsert_id;
+-- SQL
+CREATE TRIGGER tr_t_upsert FOR t_upsert
+ACTIVE BEFORE INSERT POSITION 0
+AS
+BEGIN
+    if (NEW.ID is NULL) then NEW.ID = GEN_ID(gen_t_upsert_id, 1);
+END;
