@@ -1,5 +1,7 @@
 language: php
 
+dist: precise
+
 php:
   - 5.4
   - 5.5
@@ -21,6 +23,8 @@ matrix:
       env: FB=3.0
     - php: 7.1
       env: FB=3.0
+    - php: 7.2
+      env: FB=3.0
     - php: nightly
       env: FB=3.0
     - php: 7.0
@@ -29,10 +33,14 @@ matrix:
     - php: 7.1
       env: FB=master
       dist: trusty
+    - php: 7.2
+      env: FB=master
+      dist: trusty
     - php: nightly
       env: FB=master
       dist: trusty
   allow_failures:
+    - php: 7.2
     - php: nightly
     - env: FB=3.0
     - env: FB=master
