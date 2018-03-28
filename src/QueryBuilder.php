@@ -285,7 +285,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
     /**
      * @inheritdoc
      */
-    protected function prepareInsertSelectSubQuery($columns, $schema)
+    protected function prepareInsertSelectSubQuery($columns, $schema, $params = [])
     {
         /**
          * @see https://firebirdsql.org/file/documentation/reference_manuals/fblangref25-en/html/fblangref25-dml-insert.html#fblangref25-dml-insert-select-unstable
@@ -294,7 +294,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
             throw new NotSupportedException('Firebird < 3.0.0 has the "Unstable Cursor" problem');
         }
 
-        return parent::prepareInsertSelectSubQuery($columns, $schema);
+        return parent::prepareInsertSelectSubQuery($columns, $schema, $params = []);
     }
 
     /**
