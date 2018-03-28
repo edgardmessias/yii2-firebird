@@ -74,7 +74,7 @@ class Connection extends \yii\db\Connection
         }
         parent::close();
     }
-    
+
     public function init()
     {
         parent::init();
@@ -82,13 +82,26 @@ class Connection extends \yii\db\Connection
         if ($this->firebird_version) {
             return;
         }
-        
-        $pdo = $this->createPdoInstance();
 
-        $server_version = $pdo->getAttribute(\PDO::ATTR_SERVER_VERSION);
-        
-        if (preg_match('/\w{2}-[TV](\d+\.\d+\.\d+).*remote server/', $server_version, $matches)) {
-            $this->firebird_version = $matches[1];
+        try {
+            $pdo = $this->createPdoInstance();
+
+            $server_version = $pdo->getAttribute(\PDO::ATTR_SERVER_VERSION);
+
+            if (preg_match('/\w{2}-[TV](\d+\.\d+\.\d+).*remote server/', $server_version, $matches)) {
+                $this->firebird_version = $matches[1];
+            }
+        } catch (\Exception $ex) {
         }
+    }
+
+    /**
+     * Reset the connection after cloning.
+     */
+    public function __clone()
+    {
+        parent::__clone();
+
+        $this->_transaction = null;
     }
 }
