@@ -55,6 +55,7 @@ sudo: true
 # cache composer dirs
 cache:
   directories:
+    - vendor
     - $HOME/.composer/cache
 
 before_install:
@@ -63,8 +64,8 @@ before_install:
   
   #installing and starting Firebird Server
   - sudo chmod +x tests/ci/travis/*.sh
-  - sudo tests/ci/travis/setup_firebird_${FB}.sh
-  - export PATH=$PATH:/usr/local/firebird/bin
+  - sudo bash -e -x tests/ci/travis/setup_firebird_${FB}.sh
+  - export PATH=$PATH:/usr/local/firebird/bin:/opt/firebird/bin
 
   # initialize databases
   - echo "CREATE DATABASE 'localhost:/tmp/TEST.FDB' USER 'SYSDBA' PASSWORD 'masterkey' PAGE_SIZE 16384 DEFAULT CHARACTER SET UTF8;" > /tmp/create_test.sql

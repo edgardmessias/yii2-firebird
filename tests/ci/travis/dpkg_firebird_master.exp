@@ -1,6 +1,6 @@
 #!/usr/bin/expect
 
-spawn sudo make install
+spawn sudo bash install.sh
 expect "Press Enter to start installation or ^C to abort"
 send "\r"
 
