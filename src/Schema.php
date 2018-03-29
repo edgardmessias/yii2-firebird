@@ -9,8 +9,18 @@
 namespace edgardmessias\db\firebird;
 
 use yii\base\InvalidCallException;
+use yii\db\CheckConstraint;
+use yii\db\Constraint;
+use yii\db\ConstraintFinderInterface;
+use yii\db\ConstraintFinderTrait;
 use yii\db\Exception;
+use yii\db\Expression;
+use yii\db\ForeignKeyConstraint;
+use yii\db\Schema as BaseSchema;
 use yii\db\TableSchema;
+use yii\db\Transaction;
+use yii\db\ViewFinderTrait;
+use yii\helpers\ArrayHelper;
 
 /**
  * Schema represents the Firebird schema information.
@@ -25,8 +35,10 @@ use yii\db\TableSchema;
  * @author Edgard Lorraine Messias <edgardmessias@gmail.com>
  * @since 2.0
  */
-class Schema extends \yii\db\Schema
+class Schema extends BaseSchema implements ConstraintFinderInterface
 {
+    use ViewFinderTrait;
+    use ConstraintFinderTrait;
 
     private $_lastInsertID = null;
 
@@ -255,6 +267,16 @@ class Schema extends \yii\db\Schema
     ];
 
     /**
+     * {@inheritdoc}
+     */
+    protected function resolveTableName($name)
+    {
+        $resolvedName = new TableSchema();
+        $this->resolveTableNames($resolvedName, $name);
+        return $resolvedName;
+    }
+
+    /**
      * Creates a query builder for the database.
      * This method may be overridden by child classes to create a DBMS-specific query builder.
      * @return QueryBuilder query builder instance
@@ -296,8 +318,7 @@ class Schema extends \yii\db\Schema
 
     protected function loadTableSchema($name)
     {
-        $table = new TableSchema;
-        $this->resolveTableNames($table, $name);
+        $table = $this->resolveTableName($name);
         if ($this->findColumns($table)) {
             $this->findConstraints($table);
             return $table;
@@ -365,7 +386,7 @@ class Schema extends \yii\db\Schema
             $sql .= '
                     rel.rdb$generator_name AS fgenerator_name,';
         }
-        
+
         $sql .= '
                     (SELECT RDB$TRIGGER_SOURCE FROM RDB$TRIGGERS
                         WHERE RDB$SYSTEM_FLAG = 0
@@ -412,7 +433,7 @@ class Schema extends \yii\db\Schema
             $c = $this->loadColumnSchema($column);
             if ($table->sequenceName === null && $c->autoIncrement) {
                 $matches = [];
-                
+
                 if (isset($column['fgenerator_name']) && $column['fgenerator_name']) {
                     $table->sequenceName = $column['fgenerator_name'];
                 } elseif (preg_match("/NEW.{$c->name}\s*=\s*GEN_ID\((\w+)/i", $column['fautoinc'], $matches)) {
@@ -559,7 +580,7 @@ class Schema extends \yii\db\Schema
         if ($defaultValue !== null) {
             if (in_array($c->type, [self::TYPE_DATE, self::TYPE_DATETIME, self::TYPE_TIME, self::TYPE_TIMESTAMP])
                     && preg_match('/(CURRENT_|NOW|NULL|TODAY|TOMORROW|YESTERDAY)/i', $defaultValue)) {
-                $c->defaultValue = new \yii\db\Expression(trim($defaultValue));
+                $c->defaultValue = new Expression(trim($defaultValue));
             } else {
                 $c->defaultValue = $c->phpTypecast($defaultValue);
             }
@@ -676,11 +697,11 @@ ORDER BY id.RDB$RELATION_NAME, id.RDB$INDEX_NAME, ids.RDB$FIELD_POSITION';
      */
     public function setTransactionIsolationLevel($level)
     {
-        if ($level == \yii\db\Transaction::READ_UNCOMMITTED) {
+        if ($level == Transaction::READ_UNCOMMITTED) {
             parent::setTransactionIsolationLevel('READ COMMITTED RECORD_VERSION');
-        } elseif ($level == \yii\db\Transaction::REPEATABLE_READ) {
+        } elseif ($level == Transaction::REPEATABLE_READ) {
             parent::setTransactionIsolationLevel('SNAPSHOT');
-        } elseif ($level == \yii\db\Transaction::SERIALIZABLE) {
+        } elseif ($level == Transaction::SERIALIZABLE) {
             parent::setTransactionIsolationLevel('SNAPSHOT TABLE STABILITY');
         } else {
             parent::setTransactionIsolationLevel($level);
@@ -731,7 +752,7 @@ ORDER BY id.RDB$RELATION_NAME, id.RDB$INDEX_NAME, ids.RDB$FIELD_POSITION';
         if (!$this->db->isActive) {
             throw new InvalidCallException('DB Connection is not active.');
         }
-        
+
         if ($sequenceName !== '') {
             return $this->db->createCommand('SELECT GEN_ID(' . $this->db->quoteTableName($sequenceName) . ', 0 ) FROM RDB$DATABASE;')->queryScalar();
         }
@@ -740,5 +761,133 @@ ORDER BY id.RDB$RELATION_NAME, id.RDB$INDEX_NAME, ids.RDB$FIELD_POSITION';
             return $this->_lastInsertID;
         }
         return null;
+    }
+
+    protected function loadTablePrimaryKey($tableName)
+    {
+        static $sql = <<<'SQL'
+SELECT RC.RDB$CONSTRAINT_NAME AS NAME, IDX.RDB$FIELD_NAME AS COLUMN_NAME
+FROM RDB$RELATION_CONSTRAINTS RC
+  JOIN RDB$INDEX_SEGMENTS IDX
+    ON IDX.RDB$INDEX_NAME = RC.RDB$INDEX_NAME
+WHERE RC.RDB$CONSTRAINT_TYPE = 'PRIMARY KEY'
+AND   UPPER(RC.RDB$RELATION_NAME) = UPPER(:tableName)
+SQL;
+
+        $resolvedName = $this->resolveTableName($tableName);
+        $constraints = $this->db->createCommand($sql, [
+            ':tableName' => $resolvedName->name,
+        ])->queryAll();
+        $constraints = $this->normalizePdoRowKeyCase($constraints, true);
+        $constraints = ArrayHelper::index($constraints, null, ['name']);
+
+        foreach ($constraints as $name => $constraint) {
+            $columns = ArrayHelper::getColumn($constraint, 'column_name');
+            $columns = array_map('trim', $columns);
+            $columns = array_map('strtolower', $columns);
+            return new Constraint([
+                'name' => strtolower(trim($name)),
+                'columnNames' => $columns,
+            ]);
+        }
+
+        return null;
+    }
+
+    protected function loadTableUniques($tableName)
+    {
+        static $sql = <<<'SQL'
+SELECT RC.RDB$CONSTRAINT_NAME AS NAME, IDX.RDB$FIELD_NAME AS COLUMN_NAME
+FROM RDB$RELATION_CONSTRAINTS RC
+  JOIN RDB$INDEX_SEGMENTS IDX
+    ON IDX.RDB$INDEX_NAME = RC.RDB$INDEX_NAME
+WHERE RC.RDB$CONSTRAINT_TYPE = 'UNIQUE'
+AND   UPPER(RC.RDB$RELATION_NAME) = UPPER(:tableName)
+SQL;
+
+        $resolvedName = $this->resolveTableName($tableName);
+        $constraints = $this->db->createCommand($sql, [
+            ':tableName' => $resolvedName->name,
+        ])->queryAll();
+        $constraints = $this->normalizePdoRowKeyCase($constraints, true);
+        $constraints = ArrayHelper::index($constraints, null, ['name']);
+
+        $result = [];
+        foreach ($constraints as $name => $rows) {
+            $columns = ArrayHelper::getColumn($rows, 'column_name');
+            $columns = array_map('trim', $columns);
+            $columns = array_map('strtolower', $columns);
+            $result[] = new Constraint([
+                'name' => strtolower(trim($name)),
+                'columnNames' => $columns,
+            ]);
+        }
+
+        return $result;
+    }
+
+    protected function loadTableChecks($tableName)
+    {
+        // DISTINCT not work on blob, need cast to varchar
+        static $sql = <<<'SQL'
+SELECT DISTINCT RC.RDB$CONSTRAINT_NAME AS NAME,
+       DEP.RDB$FIELD_NAME AS COLUMN_NAME,
+       CAST(TRIG.RDB$TRIGGER_SOURCE AS VARCHAR(32765)) AS CHECK_EXPR
+       FROM RDB$RELATION_CONSTRAINTS RC
+  JOIN RDB$CHECK_CONSTRAINTS CH_CONST
+    ON CH_CONST.RDB$CONSTRAINT_NAME = RC.RDB$CONSTRAINT_NAME
+  JOIN RDB$TRIGGERS TRIG
+    ON TRIG.RDB$TRIGGER_NAME = CH_CONST.RDB$TRIGGER_NAME
+  JOIN RDB$DEPENDENCIES DEP
+    ON DEP.RDB$DEPENDENT_NAME = TRIG.RDB$TRIGGER_NAME
+   AND DEP.RDB$DEPENDED_ON_NAME = TRIG.RDB$RELATION_NAME
+WHERE RC.RDB$CONSTRAINT_TYPE = 'CHECK'
+AND   UPPER(RC.RDB$RELATION_NAME) = UPPER(:tableName)
+SQL;
+
+        $resolvedName = $this->resolveTableName($tableName);
+        $constraints = $this->db->createCommand($sql, [
+            ':tableName' => $resolvedName->name,
+        ])->queryAll();
+        $constraints = $this->normalizePdoRowKeyCase($constraints, true);
+        $constraints = ArrayHelper::index($constraints, null, ['name']);
+
+        $result = [];
+        foreach ($constraints as $name => $constraint) {
+            $columns = ArrayHelper::getColumn($constraint, 'column_name');
+            $columns = array_map('trim', $columns);
+            $columns = array_map('strtolower', $columns);
+
+            $check_expr = $constraint[0]['check_expr'];
+            $check_expr = preg_replace('/^\s*CHECK\s*/i', '', $check_expr); // remove "CHECK " at begin
+            $check_expr = preg_replace('/^\((.*)\)$/i', '\1', $check_expr); // remove bracket () at begin and end
+
+            $result[] = new CheckConstraint([
+                'name' => strtolower(trim($name)),
+                'columnNames' => $columns,
+                'expression' => $check_expr,
+            ]);
+        }
+
+        return $result;
+    }
+
+    protected function loadTableDefaultValues($tableName)
+    {
+        return [];
+    }
+
+    protected function loadTableForeignKeys($tableName)
+    {
+        return [];
+    }
+
+    protected function loadTableIndexes($tableName)
+    {
+        return [];
+    }
+
+    protected function findViewNames($schema = '')
+    {
     }
 }

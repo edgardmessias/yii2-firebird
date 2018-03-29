@@ -13,7 +13,12 @@ class SchemaTest extends \yiiunit\framework\db\SchemaTest
     use FirebirdTestTrait;
 
     public $driverName = 'firebird';
-
+    
+    public function testGetSchemaNames()
+    {
+        $this->markTestSkipped('Schemas are not supported in FirebirdSQL.');
+    }
+    
     public function testView()
     {
         /* @var $schema Schema */
@@ -45,12 +50,17 @@ class SchemaTest extends \yiiunit\framework\db\SchemaTest
     {
         $columns = parent::getExpectedColumns();
         unset($columns['enum_col']);
+        unset($columns['json_col']);
         $columns['int_col']['dbType'] = 'integer';
         $columns['int_col']['size'] = null;
         $columns['int_col']['precision'] = null;
         $columns['int_col2']['dbType'] = 'integer';
         $columns['int_col2']['size'] = null;
         $columns['int_col2']['precision'] = null;
+        $columns['tinyint_col']['type'] = 'smallint';
+        $columns['tinyint_col']['dbType'] = 'smallint';
+        $columns['tinyint_col']['size'] = null;
+        $columns['tinyint_col']['precision'] = null;
         $columns['smallint_col']['dbType'] = 'smallint';
         $columns['smallint_col']['size'] = null;
         $columns['smallint_col']['precision'] = null;
@@ -67,9 +77,11 @@ class SchemaTest extends \yiiunit\framework\db\SchemaTest
         $columns['float_col2']['size'] = null;
         $columns['float_col2']['precision'] = null;
         $columns['float_col2']['scale'] = null;
+        $columns['bool_col']['type'] = 'smallint';
         $columns['bool_col']['dbType'] = 'smallint';
         $columns['bool_col']['size'] = null;
         $columns['bool_col']['precision'] = null;
+        $columns['bool_col2']['type'] = 'smallint';
         $columns['bool_col2']['dbType'] = 'smallint';
         $columns['bool_col2']['size'] = null;
         $columns['bool_col2']['precision'] = null;
@@ -154,5 +166,35 @@ class SchemaTest extends \yiiunit\framework\db\SchemaTest
         $this->assertEquals(['b'], $uniqueIndexes['uniqueb']);
         $this->assertEquals(['b', 'c'], $uniqueIndexes['uniquebc']);
         $this->assertEquals(['a', 'b', 'c'], $uniqueIndexes['uniqueabc']);
+    }
+
+    public function constraintsProvider()
+    {
+        $providers = parent::constraintsProvider();
+
+        $fixCaseNames = function ($obj) {
+            if (is_object($obj) && property_exists($obj, 'columnNames')) {
+                $obj->columnNames = array_map('strtolower', $obj->columnNames);
+            }
+            if (is_object($obj) && property_exists($obj, 'name') && is_string($obj->name)) {
+                $obj->name = strtolower($obj->name);
+            }
+            if (is_object($obj) && property_exists($obj, 'expression') && is_string($obj->expression)) {
+                $obj->expression = strtolower($obj->expression);
+            }
+            return $obj;
+        };
+        
+        foreach ($providers as $i => $data) {
+            if (is_array($data[2])) {
+                foreach ($data[2] as $k => $d) {
+                    $providers[$i][2][$k] = $fixCaseNames($d);
+                }
+            } else {
+                $providers[$i][2] = $fixCaseNames($data[2]);
+            }
+        }
+        
+        return $providers;
     }
 }
