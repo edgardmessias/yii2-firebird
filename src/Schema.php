@@ -970,5 +970,17 @@ SQL;
 
     protected function findViewNames($schema = '')
     {
+        $sql = <<<'SQL'
+SELECT RDB$RELATION_NAME
+FROM RDB$RELATIONS
+WHERE RDB$VIEW_BLR IS NOT NULL
+AND   (RDB$SYSTEM_FLAG IS NULL OR RDB$SYSTEM_FLAG = 0)
+SQL;
+
+        $views = $this->db->createCommand($sql)->queryColumn();
+        $views = array_map('trim', $views);
+        $views = array_map('strtolower', $views);
+
+        return $views;
     }
 }
