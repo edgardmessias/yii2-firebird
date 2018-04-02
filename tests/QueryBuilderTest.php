@@ -19,6 +19,21 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
 
     protected $driverName = 'firebird';
 
+    public static function assertSame($expected, $actual, $message = '') {
+        // Fix PDO VALUE Compare
+        $filter = function ($obj) {
+            return !($obj instanceof \yii\db\PdoValue);
+        };
+        if(is_array($expected)) {
+           $expected = array_filter($expected, $filter);
+        }
+        if(is_array($actual)) {
+           $actual = array_filter($actual, $filter);
+        }
+        
+        return parent::assertSame($expected, $actual, $message);
+    }
+    
     /**
      * @throws \Exception
      * @return \edgardmessias\db\firebird\QueryBuilder
@@ -401,19 +416,45 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
     {
         $concreteData = [
             'regular values' => [
-                3 => 'MERGE INTO T_upsert USING (SELECT :qp0 AS email, :qp1 AS address, :qp2 AS status, :qp3 AS profile_id FROM RDB$DATABASE) "EXCLUDED" ON (T_upsert.email="EXCLUDED".email) WHEN MATCHED THEN UPDATE SET address="EXCLUDED".address, status="EXCLUDED".status, profile_id="EXCLUDED".profile_id WHEN NOT MATCHED THEN INSERT (email, address, status, profile_id) VALUES ("EXCLUDED".email, "EXCLUDED".address, "EXCLUDED".status, "EXCLUDED".profile_id)',
+                3 => 'MERGE INTO T_upsert USING (SELECT CAST(:qp0 AS varchar(128)) AS email, CAST(:pv1 AS blob sub_type text) AS address, CAST(:qp2 AS smallint) AS status, CAST(:qp3 AS integer) AS profile_id FROM RDB$DATABASE) "EXCLUDED" ON (T_upsert.email="EXCLUDED".email) WHEN MATCHED THEN UPDATE SET address="EXCLUDED".address, status="EXCLUDED".status, profile_id="EXCLUDED".profile_id WHEN NOT MATCHED THEN INSERT (email, address, status, profile_id) VALUES ("EXCLUDED".email, "EXCLUDED".address, "EXCLUDED".status, "EXCLUDED".profile_id)',
+                4 => [
+                    ':qp0' => 'test@example.com',
+                    ':pv1' => new \yii\db\PdoValue('bar {{city}}', \PDO::PARAM_LOB),
+                    ':qp2' => 1,
+                    ':qp3' => null,
+                ],
+
             ],
             'regular values with update part' => [
-                3 => 'MERGE INTO T_upsert USING (SELECT :qp0 AS email, :qp1 AS address, :qp2 AS status, :qp3 AS profile_id FROM RDB$DATABASE) "EXCLUDED" ON (T_upsert.email="EXCLUDED".email) WHEN MATCHED THEN UPDATE SET address=:qp4, status=:qp5, orders=T_upsert.orders + 1 WHEN NOT MATCHED THEN INSERT (email, address, status, profile_id) VALUES ("EXCLUDED".email, "EXCLUDED".address, "EXCLUDED".status, "EXCLUDED".profile_id)',
+                3 => 'MERGE INTO T_upsert USING (SELECT CAST(:qp0 AS varchar(128)) AS email, CAST(:pv1 AS blob sub_type text) AS address, CAST(:qp2 AS smallint) AS status, CAST(:qp3 AS integer) AS profile_id FROM RDB$DATABASE) "EXCLUDED" ON (T_upsert.email="EXCLUDED".email) WHEN MATCHED THEN UPDATE SET address=:pv4, status=:qp5, orders=T_upsert.orders + 1 WHEN NOT MATCHED THEN INSERT (email, address, status, profile_id) VALUES ("EXCLUDED".email, "EXCLUDED".address, "EXCLUDED".status, "EXCLUDED".profile_id)',
+                4 => [
+                    ':qp0' => 'test@example.com',
+                    ':pv1' => new \yii\db\PdoValue('bar {{city}}', \PDO::PARAM_LOB),
+                    ':qp2' => 1,
+                    ':qp3' => null,
+                    ':pv4' => new \yii\db\PdoValue('foo {{city}}', \PDO::PARAM_LOB),
+                    ':qp5' => 2,
+                ],
             ],
             'regular values without update part' => [
-                3 => 'MERGE INTO T_upsert USING (SELECT :qp0 AS email, :qp1 AS address, :qp2 AS status, :qp3 AS profile_id FROM RDB$DATABASE) "EXCLUDED" ON (T_upsert.email="EXCLUDED".email) WHEN NOT MATCHED THEN INSERT (email, address, status, profile_id) VALUES ("EXCLUDED".email, "EXCLUDED".address, "EXCLUDED".status, "EXCLUDED".profile_id)',
+                3 => 'MERGE INTO T_upsert USING (SELECT CAST(:qp0 AS varchar(128)) AS email, CAST(:pv1 AS blob sub_type text) AS address, CAST(:qp2 AS smallint) AS status, CAST(:qp3 AS integer) AS profile_id FROM RDB$DATABASE) "EXCLUDED" ON (T_upsert.email="EXCLUDED".email) WHEN NOT MATCHED THEN INSERT (email, address, status, profile_id) VALUES ("EXCLUDED".email, "EXCLUDED".address, "EXCLUDED".status, "EXCLUDED".profile_id)',
+                4 => [
+                    ':qp0' => 'test@example.com',
+                    ':pv1' => new \yii\db\PdoValue('bar {{city}}', \PDO::PARAM_LOB),
+                    ':qp2' => 1,
+                    ':qp3' => null,
+                ],
             ],
             'query' => [
                 3 => 'MERGE INTO T_upsert USING (SELECT FIRST 1 email, 2 AS status FROM customer WHERE name=:qp0) "EXCLUDED" ON (T_upsert.email="EXCLUDED".email) WHEN MATCHED THEN UPDATE SET status="EXCLUDED".status WHEN NOT MATCHED THEN INSERT (email, status) VALUES ("EXCLUDED".email, "EXCLUDED".status)',
             ],
             'query with update part' => [
-                3 => 'MERGE INTO T_upsert USING (SELECT FIRST 1 email, 2 AS status FROM customer WHERE name=:qp0) "EXCLUDED" ON (T_upsert.email="EXCLUDED".email) WHEN MATCHED THEN UPDATE SET address=:qp1, status=:qp2, orders=T_upsert.orders + 1 WHEN NOT MATCHED THEN INSERT (email, status) VALUES ("EXCLUDED".email, "EXCLUDED".status)',
+                3 => 'MERGE INTO T_upsert USING (SELECT FIRST 1 email, 2 AS status FROM customer WHERE name=:qp0) "EXCLUDED" ON (T_upsert.email="EXCLUDED".email) WHEN MATCHED THEN UPDATE SET address=:pv1, status=:qp2, orders=T_upsert.orders + 1 WHEN NOT MATCHED THEN INSERT (email, status) VALUES ("EXCLUDED".email, "EXCLUDED".status)',
+                4 => [
+                    ':qp0' => 'user1',
+                    ':pv1' => new \yii\db\PdoValue('foo {{city}}', \PDO::PARAM_LOB),
+                    ':qp2' => 2,
+                ],
             ],
             'query without update part' => [
                 3 => 'MERGE INTO T_upsert USING (SELECT FIRST 1 email, 2 AS status FROM customer WHERE name=:qp0) "EXCLUDED" ON (T_upsert.email="EXCLUDED".email) WHEN NOT MATCHED THEN INSERT (email, status) VALUES ("EXCLUDED".email, "EXCLUDED".status)',
@@ -438,10 +479,10 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         $newData = parent::upsertProvider();
         foreach ($concreteData as $testName => $data) {
             $newData[$testName] = array_replace($newData[$testName], $data);
-        }
+        }        
         return $newData;
     }
-
+    
     public function batchInsertProvider()
     {
         $tests = parent::batchInsertProvider();

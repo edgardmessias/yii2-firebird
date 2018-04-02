@@ -353,9 +353,16 @@ class QueryBuilder extends \yii\db\QueryBuilder
         $on = $this->buildCondition($onCondition, $params);
         list(, $placeholders, $values, $params) = $this->prepareInsertValues($table, $insertColumns, $params);
         if (!empty($placeholders)) {
+            /** @var Schema $schema */
+            $schema = $this->db->getSchema();
+            $tableSchema = $schema->getTableSchema($table);
+            $columnSchemas = $tableSchema !== null ? $tableSchema->columns : [];
+            
             $usingSelectValues = [];
             foreach ($insertNames as $index => $name) {
-                $usingSelectValues[$name] = new Expression($placeholders[$index]);
+                if (isset($columnSchemas[$name])) {
+                    $usingSelectValues[$name] = new Expression("CAST({$placeholders[$index]} AS {$columnSchemas[$name]->dbType})");
+                }
             }
             $usingSubQuery = (new Query())
                 ->select($usingSelectValues)
