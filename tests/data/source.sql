@@ -105,6 +105,24 @@ END;
 -- SQL
 EXECUTE block AS
 BEGIN
+    IF (EXISTS(SELECT 1 FROM rdb$relations WHERE LOWER(rdb$relation_name) = 'dossier')) THEN 
+        EXECUTE STATEMENT 'DROP TABLE dossier;';
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
+    IF (EXISTS(SELECT 1 FROM rdb$relations WHERE LOWER(rdb$relation_name) = 'employee')) THEN 
+        EXECUTE STATEMENT 'DROP TABLE employee;';
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
+    IF (EXISTS(SELECT 1 FROM rdb$relations WHERE LOWER(rdb$relation_name) = 'department')) THEN 
+        EXECUTE STATEMENT 'DROP TABLE department;';
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
     IF (EXISTS(SELECT 1 FROM rdb$relations WHERE LOWER(rdb$relation_name) = 'animal_view')) THEN 
         EXECUTE STATEMENT 'DROP VIEW animal_view;';
 END;
@@ -197,6 +215,18 @@ EXECUTE block AS
 BEGIN
     IF (EXISTS(SELECT 1 FROM rdb$generators WHERE LOWER(rdb$generator_name) = 'seq_comment_id')) THEN 
         EXECUTE STATEMENT 'DROP GENERATOR seq_comment_id;';
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
+    IF (EXISTS(SELECT 1 FROM rdb$generators WHERE LOWER(rdb$generator_name) = 'seq_dossier_id')) THEN 
+        EXECUTE STATEMENT 'DROP GENERATOR seq_dossier_id;';
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
+    IF (EXISTS(SELECT 1 FROM rdb$generators WHERE LOWER(rdb$generator_name) = 'seq_department_id')) THEN 
+        EXECUTE STATEMENT 'DROP GENERATOR seq_department_id;';
 END;
 -- SQL
 EXECUTE block AS
@@ -433,6 +463,44 @@ BEGIN
     if (NEW.ID is NULL) then NEW.ID = NEXT VALUE FOR seq_comment_id;
 END
 -- SQL
+CREATE TABLE department (
+  id INTEGER NOT NULL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL
+);
+-- SQL
+CREATE SEQUENCE seq_department_id;
+-- SQL
+CREATE TRIGGER tr_department FOR department
+ACTIVE BEFORE INSERT POSITION 0
+AS
+BEGIN
+    if (NEW.ID is NULL) then NEW.ID = NEXT VALUE FOR seq_department_id;
+END
+-- SQL
+CREATE TABLE employee (
+  id INTEGER NOT NULL,
+  department_id INTEGER NOT NULL,
+  first_name VARCHAR(255) NOT NULL,
+  last_name VARCHAR(255) NOT NULL,
+  PRIMARY KEY (id, department_id)
+);
+-- SQL
+CREATE TABLE dossier (
+  id INTEGER NOT NULL PRIMARY KEY,
+  department_id INTEGER NOT NULL,
+  employee_id INTEGER NOT NULL,
+  summary VARCHAR(255) NOT NULL
+);
+-- SQL
+CREATE SEQUENCE seq_dossier_id;
+-- SQL
+CREATE TRIGGER tr_dossier FOR dossier
+ACTIVE BEFORE INSERT POSITION 0
+AS
+BEGIN
+    if (NEW.ID is NULL) then NEW.ID = NEXT VALUE FOR seq_dossier_id;
+END
+-- SQL
 CREATE VIEW animal_view AS SELECT * FROM animal;
 -- SQL
 EXECUTE block AS BEGIN
@@ -505,6 +573,26 @@ END;
 EXECUTE block AS
 BEGIN
     INSERT INTO document (title, content, version) VALUES ('Yii 2.0 guide', 'This is Yii 2.0 guide', 0);
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
+    INSERT INTO department (id, title) VALUES (1, 'IT');
+    INSERT INTO department (id, title) VALUES (2, 'accounting');
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
+    INSERT INTO employee (id, department_id, first_name, last_name) VALUES (1, 1, 'John', 'Doe');
+    INSERT INTO employee (id, department_id, first_name, last_name) VALUES (1, 2, 'Ann', 'Smith');
+    INSERT INTO employee (id, department_id, first_name, last_name) VALUES (2, 2, 'Will', 'Smith');
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
+    INSERT INTO dossier (id, department_id, employee_id, summary) VALUES (1, 1, 1, 'Excellent employee.');
+    INSERT INTO dossier (id, department_id, employee_id, summary) VALUES (2, 2, 1, 'Brilliant employee.');
+    INSERT INTO dossier (id, department_id, employee_id, summary) VALUES (3, 2, 2, 'Good employee.');
 END;
 -- SQL
 /* bit test, see https://github.com/yiisoft/yii2/issues/9006 */
