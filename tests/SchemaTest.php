@@ -176,8 +176,14 @@ class SchemaTest extends \yiiunit\framework\db\SchemaTest
             if (is_object($obj) && property_exists($obj, 'columnNames')) {
                 $obj->columnNames = array_map('strtolower', $obj->columnNames);
             }
+            if (is_object($obj) && property_exists($obj, 'foreignColumnNames')) {
+                $obj->foreignColumnNames = array_map('strtolower', $obj->foreignColumnNames);
+            }
             if (is_object($obj) && property_exists($obj, 'name') && is_string($obj->name)) {
                 $obj->name = strtolower($obj->name);
+            }
+            if (is_object($obj) && property_exists($obj, 'foreignTableName') && is_string($obj->foreignTableName)) {
+                $obj->foreignTableName = strtolower($obj->foreignTableName);
             }
             if (is_object($obj) && property_exists($obj, 'expression') && is_string($obj->expression)) {
                 $obj->expression = strtolower($obj->expression);

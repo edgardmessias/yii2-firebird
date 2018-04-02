@@ -15,6 +15,7 @@ use yii\db\ConstraintFinderInterface;
 use yii\db\ConstraintFinderTrait;
 use yii\db\Exception;
 use yii\db\Expression;
+use yii\db\ForeignKeyConstraint;
 use yii\db\IndexConstraint;
 use yii\db\Schema as BaseSchema;
 use yii\db\TableSchema;
@@ -911,12 +912,60 @@ SQL;
 
     protected function loadTableDefaultValues($tableName)
     {
-        return [];
+        throw new \yii\base\NotSupportedException('FirebirdSQL does not support default value constraints.');
     }
 
     protected function loadTableForeignKeys($tableName)
     {
-        return [];
+        static $sql = <<<'SQL'
+SELECT A.RDB$CONSTRAINT_NAME AS NAME,
+       E.RDB$FIELD_NAME AS COLUMN_NAME,
+       C.RDB$RELATION_NAME AS FOREIGN_TABLE_NAME,
+       D.RDB$FIELD_NAME AS FOREIGN_COLUMN_NAME,
+       B.RDB$UPDATE_RULE AS ON_UPDATE,
+       B.RDB$DELETE_RULE AS ON_DELETE
+FROM RDB$REF_CONSTRAINTS B
+  JOIN RDB$RELATION_CONSTRAINTS A
+    ON A.RDB$CONSTRAINT_NAME = B.RDB$CONSTRAINT_NAME
+  JOIN RDB$RELATION_CONSTRAINTS C
+    ON B.RDB$CONST_NAME_UQ = C.RDB$CONSTRAINT_NAME
+  JOIN RDB$INDEX_SEGMENTS D
+    ON C.RDB$INDEX_NAME = D.RDB$INDEX_NAME
+  JOIN RDB$INDEX_SEGMENTS E
+    ON A.RDB$INDEX_NAME = E.RDB$INDEX_NAME
+   AND E.RDB$FIELD_POSITION = D.RDB$FIELD_POSITION
+WHERE A.RDB$CONSTRAINT_TYPE = 'FOREIGN KEY'
+AND   UPPER(A.RDB$RELATION_NAME) = UPPER(:tableName)
+SQL;
+
+        $resolvedName = $this->resolveTableName($tableName);
+        $constraints = $this->db->createCommand($sql, [
+            ':tableName' => $resolvedName->name,
+        ])->queryAll();
+        $constraints = $this->normalizePdoRowKeyCase($constraints, true);
+        $constraints = ArrayHelper::index($constraints, null, ['name']);
+
+        $result = [];
+        foreach ($constraints as $name => $constraint) {
+            $columnNames = ArrayHelper::getColumn($constraint, 'column_name');
+            $columnNames = array_map('trim', $columnNames);
+            $columnNames = array_map('strtolower', $columnNames);
+            
+            $foreignColumnNames = ArrayHelper::getColumn($constraint, 'foreign_column_name');
+            $foreignColumnNames = array_map('trim', $foreignColumnNames);
+            $foreignColumnNames = array_map('strtolower', $foreignColumnNames);
+            
+            $result[] = new ForeignKeyConstraint([
+                'name' => strtolower(trim($name)),
+                'columnNames' => $columnNames,
+                'foreignTableName' => strtolower(trim($constraint[0]['foreign_table_name'])),
+                'foreignColumnNames' => $foreignColumnNames,
+                'onDelete' => trim($constraint[0]['on_delete']),
+                'onUpdate' => trim($constraint[0]['on_update']),
+            ]);
+        }
+
+        return $result;
     }
 
     protected function findViewNames($schema = '')
