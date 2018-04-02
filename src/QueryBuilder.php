@@ -60,6 +60,14 @@ class QueryBuilder extends \yii\db\QueryBuilder
         parent::init();
     }
 
+    protected function defaultExpressionBuilders()
+    {
+        return array_merge(parent::defaultExpressionBuilders(), [
+            'yii\db\Expression' => 'edgardmessias\db\firebird\ExpressionBuilder',
+            'yii\db\conditions\InCondition' => 'edgardmessias\db\firebird\conditions\InConditionBuilder',
+        ]);
+    }
+
     /**
      * Generates a SELECT SQL statement from a [[Query]] object.
      * @param Query $query the [[Query]] object from which the SQL statement will be generated.
@@ -136,32 +144,6 @@ class QueryBuilder extends \yii\db\QueryBuilder
     /**
      * @inheritdoc
      */
-    protected function buildCompositeInCondition($operator, $columns, $values, &$params)
-    {
-        $quotedColumns = [];
-        foreach ($columns as $i => $column) {
-            $quotedColumns[$i] = strpos($column, '(') === false ? $this->db->quoteColumnName($column) : $column;
-        }
-        $vss = [];
-        foreach ($values as $value) {
-            $vs = [];
-            foreach ($columns as $i => $column) {
-                if (isset($value[$column])) {
-                    $phName = self::PARAM_PREFIX . count($params);
-                    $params[$phName] = $value[$column];
-                    $vs[] = $quotedColumns[$i] . ($operator === 'IN' ? ' = ' : ' != ') . $phName;
-                } else {
-                    $vs[] = $quotedColumns[$i] . ($operator === 'IN' ? ' IS' : ' IS NOT') . ' NULL';
-                }
-            }
-            $vss[] = '(' . implode($operator === 'IN' ? ' AND ' : ' OR ', $vs) . ')';
-        }
-        return '(' . implode($operator === 'IN' ? ' OR ' : ' AND ', $vss) . ')';
-    }
-
-    /**
-     * @inheritdoc
-     */
     public function buildOrderByAndLimit($sql, $orderBy, $limit, $offset)
     {
 
@@ -227,37 +209,13 @@ class QueryBuilder extends \yii\db\QueryBuilder
     }
 
     /**
-     *
-     * @param Expression $value
-     * @return Expression
-     */
-    protected function convertExpression($value)
-    {
-        if (!($value instanceof Expression)) {
-            return $value;
-        }
-        
-        $expressionMap = [
-            "strftime('%Y')" => "EXTRACT(YEAR FROM TIMESTAMP 'now')"
-        ];
-        
-        if (isset($expressionMap[$value->expression])) {
-            return new Expression($expressionMap[$value->expression]);
-        }
-        return $value;
-    }
-
-    /**
      * @inheritdoc
      */
-    public function insert($table, $columns, &$params)
+    public function prepareInsertValues($table, $columns, $params = [])
     {
         $schema = $this->db->getSchema();
-        if (($tableSchema = $schema->getTableSchema($table)) !== null) {
-            $columnSchemas = $tableSchema->columns;
-        } else {
-            $columnSchemas = [];
-        }
+        $tableSchema = $schema->getTableSchema($table);
+        $columnSchemas = $tableSchema !== null ? $tableSchema->columns : [];
         
         //Empty insert
         if (empty($columns) && !empty($columnSchemas)) {
@@ -271,15 +229,19 @@ class QueryBuilder extends \yii\db\QueryBuilder
 
         if (is_array($columns)) {
             foreach ($columns as $name => $value) {
-                if ($value instanceof Expression) {
-                    $columns[$name] = $this->convertExpression($value);
-                } elseif (isset($columnSchemas[$name]) && in_array($columnSchemas[$name]->type, [Schema::TYPE_TEXT, Schema::TYPE_BINARY])) {
+                if ($value instanceof \yii\db\ExpressionInterface) {
+                    continue;
+                }
+                if ($value instanceof \yii\db\PdoValue) {
+                    continue;
+                }
+                if (isset($columnSchemas[$name]) && in_array($columnSchemas[$name]->type, [Schema::TYPE_TEXT, Schema::TYPE_BINARY])) {
                     $columns[$name] = [$value, \PDO::PARAM_LOB];
                 }
             }
         }
 
-        return parent::insert($table, $columns, $params);
+        return parent::prepareInsertValues($table, $columns, $params);
     }
     
     /**
@@ -294,28 +256,30 @@ class QueryBuilder extends \yii\db\QueryBuilder
             throw new NotSupportedException('Firebird < 3.0.0 has the "Unstable Cursor" problem');
         }
 
-        return parent::prepareInsertSelectSubQuery($columns, $schema, $params = []);
+        return parent::prepareInsertSelectSubQuery($columns, $schema, $params);
     }
 
     /**
      * @inheritdoc
      */
-    public function update($table, $columns, $condition, &$params)
+    public function prepareUpdateSets($table, $columns, $params = [])
     {
         $schema = $this->db->getSchema();
-        if (($tableSchema = $schema->getTableSchema($table)) !== null) {
-            $columnSchemas = $tableSchema->columns;
-        } else {
-            $columnSchemas = [];
-        }
+        $tableSchema = $schema->getTableSchema($table);
+        $columnSchemas = $tableSchema !== null ? $tableSchema->columns : [];
+
         foreach ($columns as $name => $value) {
-            if ($value instanceof Expression) {
-                $columns[$name] = $this->convertExpression($value);
-            } elseif (isset($columnSchemas[$name]) && in_array($columnSchemas[$name]->type, [Schema::TYPE_TEXT, Schema::TYPE_BINARY])) {
+            if ($value instanceof \yii\db\ExpressionInterface) {
+                continue;
+            }
+            if ($value instanceof \yii\db\PdoValue) {
+                continue;
+            }
+            if (isset($columnSchemas[$name]) && in_array($columnSchemas[$name]->type, [Schema::TYPE_TEXT, Schema::TYPE_BINARY])) {
                 $columns[$name] = [$value, \PDO::PARAM_LOB];
             }
         }
-        return parent::update($table, $columns, $condition, $params);
+        return parent::prepareUpdateSets($table, $columns, $params);
     }
 
     /**

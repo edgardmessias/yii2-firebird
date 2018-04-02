@@ -152,9 +152,9 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
                 [':qp0' => 1, ':qp1' => 'oy', ':qp2' => 2, ':qp3' => 'yo']
             ];
 
-        $conditions[53] = [ ['=', 'date', (new Query())->select('max(date)')->from('test')->where(['id' => 5])], 'date = (SELECT max(date) AS max_date FROM test WHERE id=:qp0)', [':qp0' => 5] ];
-        $conditions[58] = [ ['in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]], '((id = :qp0 AND name = :qp1) OR (id = :qp2 AND name = :qp3))', [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']];
-        $conditions[59] = [ ['not in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]], '((id != :qp0 OR name != :qp1) AND (id != :qp2 OR name != :qp3))', [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']];
+        $conditions[44] = [ ['=', 'date', (new Query())->select('max(date)')->from('test')->where(['id' => 5])], '"date" = (SELECT max(date) AS max_date FROM test WHERE id=:qp0)', [':qp0' => 5] ];
+        $conditions[51] = [ ['in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]], '((id = :qp0 AND name = :qp1) OR (id = :qp2 AND name = :qp3))', [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']];
+        $conditions[52] = [ ['not in', ['id', 'name'], [['id' => 1, 'name' => 'foo'], ['id' => 2, 'name' => 'bar']]], '((id != :qp0 OR name != :qp1) AND (id != :qp2 OR name != :qp3))', [':qp0' => 1, ':qp1' => 'foo', ':qp2' => 2, ':qp3' => 'bar']];
         
         return $conditions;
     }
@@ -186,7 +186,7 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
                 },
             ],
             'add' => [
-                "ALTER TABLE {{{$tableName}}} ALTER COLUMN [[$name]] SET DEFAULT 0",
+                "ALTER TABLE {{{$tableName}}} ALTER COLUMN [[C_default]] SET DEFAULT 0",
                 function (\yii\db\QueryBuilder $qb) use ($tableName, $name) {
                     return $qb->addDefaultValue($name, $tableName, 'C_default', 0);
                 },
@@ -504,5 +504,14 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         //Reserved Words Multiple
         $this->assertEquals('"order".comment', $this->replaceQuotes('[[order]].[[comment]]'));
         $this->assertEquals('"order"."time"', $this->replaceQuotes('[[order]].[[time]]'));
+    }
+
+    public function indexesProvider()
+    {
+        $tests = parent::indexesProvider();
+        
+        $tests['drop'][0] = 'DROP INDEX [[CN_constraints_2_single]]';
+        
+        return $tests;
     }
 }
