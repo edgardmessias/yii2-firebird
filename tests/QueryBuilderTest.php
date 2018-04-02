@@ -22,12 +22,18 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
     /**
      * @throws \Exception
      * @return \edgardmessias\db\firebird\QueryBuilder
+     * @param bool $reset
+     * @param bool $open
      */
-    protected function getQueryBuilder()
+    protected function getQueryBuilder($reset = true, $open = false)
     {
+        $connection = $this->getConnection($reset, $open);
+
+        \Yii::$container->set('db', $connection);
+
         switch ($this->driverName) {
             case 'firebird':
-                return new \edgardmessias\db\firebird\QueryBuilder($this->getConnection(true, false));
+                return new \edgardmessias\db\firebird\QueryBuilder($connection);
         }
         throw new \Exception('Test is not implemented for ' . $this->driverName);
     }
@@ -153,7 +159,11 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         return $conditions;
     }
     
-    public function testAddDropPrimaryKey()
+    /**
+     * @dataProvider primaryKeysProvider
+     * @param string $sql
+     */
+    public function testAddDropPrimaryKey($sql, \Closure $builder)
     {
         $tableName = 'constraints';
 
@@ -161,7 +171,27 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         $qb = $this->getQueryBuilder();
         $qb->db->createCommand()->alterColumn($tableName, 'field1', 'string(255) not null')->execute();
         
-        parent::testAddDropPrimaryKey();
+        parent::testAddDropPrimaryKey($sql, $builder);
+    }
+
+    public function defaultValuesProvider()
+    {
+        $tableName = 'T_constraints_1';
+        $name = 'CN_default';
+        return [
+            'drop' => [
+                "ALTER TABLE {{{$tableName}}} ALTER COLUMN [[$name]] DROP DEFAULT",
+                function (\yii\db\QueryBuilder $qb) use ($tableName, $name) {
+                    return $qb->dropDefaultValue($name, $tableName);
+                },
+            ],
+            'add' => [
+                "ALTER TABLE {{{$tableName}}} ALTER COLUMN [[$name]] SET DEFAULT 0",
+                function (\yii\db\QueryBuilder $qb) use ($tableName, $name) {
+                    return $qb->addDefaultValue($name, $tableName, 'C_default', 0);
+                },
+            ],
+        ];
     }
 
     /**
@@ -365,6 +395,51 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         $this->assertEquals(4, $this->getConnection(false)->getSchema()->insert('autoincrement_table', ['description' => 'auto increment 4'])['id']);
         
         $this->assertEquals(4, (new Query())->from('autoincrement_table')->max('id', $this->getConnection(false)));
+    }
+
+    public function upsertProvider()
+    {
+        $concreteData = [
+            'regular values' => [
+                3 => 'MERGE INTO T_upsert USING (SELECT :qp0 AS email, :qp1 AS address, :qp2 AS status, :qp3 AS profile_id FROM RDB$DATABASE) "EXCLUDED" ON (T_upsert.email="EXCLUDED".email) WHEN MATCHED THEN UPDATE SET address="EXCLUDED".address, status="EXCLUDED".status, profile_id="EXCLUDED".profile_id WHEN NOT MATCHED THEN INSERT (email, address, status, profile_id) VALUES ("EXCLUDED".email, "EXCLUDED".address, "EXCLUDED".status, "EXCLUDED".profile_id)',
+            ],
+            'regular values with update part' => [
+                3 => 'MERGE INTO T_upsert USING (SELECT :qp0 AS email, :qp1 AS address, :qp2 AS status, :qp3 AS profile_id FROM RDB$DATABASE) "EXCLUDED" ON (T_upsert.email="EXCLUDED".email) WHEN MATCHED THEN UPDATE SET address=:qp4, status=:qp5, orders=T_upsert.orders + 1 WHEN NOT MATCHED THEN INSERT (email, address, status, profile_id) VALUES ("EXCLUDED".email, "EXCLUDED".address, "EXCLUDED".status, "EXCLUDED".profile_id)',
+            ],
+            'regular values without update part' => [
+                3 => 'MERGE INTO T_upsert USING (SELECT :qp0 AS email, :qp1 AS address, :qp2 AS status, :qp3 AS profile_id FROM RDB$DATABASE) "EXCLUDED" ON (T_upsert.email="EXCLUDED".email) WHEN NOT MATCHED THEN INSERT (email, address, status, profile_id) VALUES ("EXCLUDED".email, "EXCLUDED".address, "EXCLUDED".status, "EXCLUDED".profile_id)',
+            ],
+            'query' => [
+                3 => 'MERGE INTO T_upsert USING (SELECT FIRST 1 email, 2 AS status FROM customer WHERE name=:qp0) "EXCLUDED" ON (T_upsert.email="EXCLUDED".email) WHEN MATCHED THEN UPDATE SET status="EXCLUDED".status WHEN NOT MATCHED THEN INSERT (email, status) VALUES ("EXCLUDED".email, "EXCLUDED".status)',
+            ],
+            'query with update part' => [
+                3 => 'MERGE INTO T_upsert USING (SELECT FIRST 1 email, 2 AS status FROM customer WHERE name=:qp0) "EXCLUDED" ON (T_upsert.email="EXCLUDED".email) WHEN MATCHED THEN UPDATE SET address=:qp1, status=:qp2, orders=T_upsert.orders + 1 WHEN NOT MATCHED THEN INSERT (email, status) VALUES ("EXCLUDED".email, "EXCLUDED".status)',
+            ],
+            'query without update part' => [
+                3 => 'MERGE INTO T_upsert USING (SELECT FIRST 1 email, 2 AS status FROM customer WHERE name=:qp0) "EXCLUDED" ON (T_upsert.email="EXCLUDED".email) WHEN NOT MATCHED THEN INSERT (email, status) VALUES ("EXCLUDED".email, "EXCLUDED".status)',
+            ],
+            'values and expressions' => [
+                3 => 'UPDATE OR INSERT INTO {{%T_upsert}} ({{%T_upsert}}.[[email]], [[ts]]) VALUES (:qp0, now())',
+            ],
+            'values and expressions with update part' => [
+                3 => 'UPDATE OR INSERT INTO {{%T_upsert}} ({{%T_upsert}}.[[email]], [[ts]]) VALUES (:qp0, now())',
+            ],
+            'values and expressions without update part' => [
+                3 => 'UPDATE OR INSERT INTO {{%T_upsert}} ({{%T_upsert}}.[[email]], [[ts]]) VALUES (:qp0, now())',
+            ],
+            'query, values and expressions with update part' => [
+                3 => 'MERGE INTO {{%T_upsert}} USING (SELECT :phEmail AS email, now() AS [[time]]) "EXCLUDED" ON ({{%T_upsert}}.email="EXCLUDED".email) WHEN MATCHED THEN UPDATE SET ts=:qp1, [[orders]]=T_upsert.orders + 1 WHEN NOT MATCHED THEN INSERT (email, [[time]]) VALUES ("EXCLUDED".email, "EXCLUDED".[[time]])',
+            ],
+            'query, values and expressions without update part' => [
+                3 => 'MERGE INTO {{%T_upsert}} USING (SELECT :phEmail AS email, now() AS [[time]]) "EXCLUDED" ON ({{%T_upsert}}.email="EXCLUDED".email) WHEN MATCHED THEN UPDATE SET ts=:qp1, [[orders]]=T_upsert.orders + 1 WHEN NOT MATCHED THEN INSERT (email, [[time]]) VALUES ("EXCLUDED".email, "EXCLUDED".[[time]])',
+            ],
+        ];
+
+        $newData = parent::upsertProvider();
+        foreach ($concreteData as $testName => $data) {
+            $newData[$testName] = array_replace($newData[$testName], $data);
+        }
+        return $newData;
     }
 
     public function batchInsertProvider()

@@ -135,6 +135,12 @@ END;
 -- SQL
 EXECUTE block AS
 BEGIN
+    IF (EXISTS(SELECT 1 FROM rdb$relations WHERE LOWER(rdb$relation_name) = 't_upsert')) THEN 
+        EXECUTE STATEMENT 'DROP TABLE t_upsert;';
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
     IF (EXISTS(SELECT 1 FROM rdb$generators WHERE LOWER(rdb$generator_name) = 'seq_null_values_id')) THEN 
         EXECUTE STATEMENT 'DROP SEQUENCE seq_null_values_id;';
 END;
@@ -191,6 +197,12 @@ EXECUTE block AS
 BEGIN
     IF (EXISTS(SELECT 1 FROM rdb$generators WHERE LOWER(rdb$generator_name) = 'seq_comment_id')) THEN 
         EXECUTE STATEMENT 'DROP GENERATOR seq_comment_id;';
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
+    IF (EXISTS(SELECT 1 FROM rdb$generators WHERE LOWER(rdb$generator_name) = 'gen_t_upsert_id')) THEN 
+        EXECUTE STATEMENT 'DROP GENERATOR gen_t_upsert_id;';
 END;
 -- SQL
 CREATE TABLE constraints (
@@ -588,3 +600,25 @@ CREATE TABLE t_constraints_4
     c_col_2 INT NOT NULL,
     CONSTRAINT cn_constraints_4 UNIQUE (c_col_1, c_col_2)
 );
+-- SQL
+CREATE TABLE t_upsert
+(
+    id INTEGER NOT NULL PRIMARY KEY,
+    ts INT,
+    email VARCHAR(128) NOT NULL UNIQUE,
+    recovery_email VARCHAR(128),
+    address blob sub_type text,
+    status SMALLINT DEFAULT 0 NOT NULL,
+    orders INT DEFAULT 0 NOT NULL,
+    profile_id INT,
+    UNIQUE (email, recovery_email)
+);
+-- SQL
+CREATE GENERATOR gen_t_upsert_id;
+-- SQL
+CREATE TRIGGER tr_t_upsert FOR t_upsert
+ACTIVE BEFORE INSERT POSITION 0
+AS
+BEGIN
+    if (NEW.ID is NULL) then NEW.ID = GEN_ID(gen_t_upsert_id, 1);
+END;

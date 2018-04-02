@@ -349,7 +349,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
                     $value = 'NULL';
                 } elseif ($value instanceof ExpressionInterface) {
                     $value = $this->buildExpression($value, $params);
-		}
+                }
                 $vs[] = $value;
             }
             $values[] = 'INSERT INTO ' . $schema->quoteTableName($table)
@@ -363,6 +363,73 @@ class QueryBuilder extends \yii\db\QueryBuilder
         return 'EXECUTE block AS BEGIN ' . implode(' ', $values) . ' END;';
     }
     
+    /**
+     * {@inheritdoc}
+     * @see https://www.firebirdsql.org/refdocs/langrefupd21-update-or-insert.html
+     * @see https://www.firebirdsql.org/refdocs/langrefupd21-merge.html
+     */
+    public function upsert($table, $insertColumns, $updateColumns, &$params)
+    {
+        /** @var Constraint[] $constraints */
+        list($uniqueNames, $insertNames, $updateNames) = $this->prepareUpsertColumns($table, $insertColumns, $updateColumns, $constraints);
+        if (empty($uniqueNames)) {
+            return 'UPDATE OR ' . $this->insert($table, $insertColumns, $params);
+        }
+
+        $onCondition = ['or'];
+        $quotedTableName = $this->db->quoteTableName($table);
+        foreach ($constraints as $constraint) {
+            $constraintCondition = ['and'];
+            foreach ($constraint->columnNames as $name) {
+                $quotedName = $this->db->quoteColumnName($name);
+                $constraintCondition[] = "$quotedTableName.$quotedName=\"EXCLUDED\".$quotedName";
+            }
+            $onCondition[] = $constraintCondition;
+        }
+        $on = $this->buildCondition($onCondition, $params);
+        list(, $placeholders, $values, $params) = $this->prepareInsertValues($table, $insertColumns, $params);
+        if (!empty($placeholders)) {
+            $usingSelectValues = [];
+            foreach ($insertNames as $index => $name) {
+                $usingSelectValues[$name] = new Expression($placeholders[$index]);
+            }
+            $usingSubQuery = (new Query())
+                ->select($usingSelectValues)
+                ->from('RDB$DATABASE');
+            list($usingValues, $params) = $this->build($usingSubQuery, $params);
+        }
+        $mergeSql = 'MERGE INTO ' . $this->db->quoteTableName($table) . ' '
+            . 'USING (' . (isset($usingValues) ? $usingValues : ltrim($values, ' ')) . ') "EXCLUDED" '
+            . "ON ($on)";
+        $insertValues = [];
+        foreach ($insertNames as $name) {
+            $quotedName = $this->db->quoteColumnName($name);
+            if (strrpos($quotedName, '.') === false) {
+                $quotedName = '"EXCLUDED".' . $quotedName;
+            }
+            $insertValues[] = $quotedName;
+        }
+        $insertSql = 'INSERT (' . implode(', ', $insertNames) . ')'
+            . ' VALUES (' . implode(', ', $insertValues) . ')';
+        if ($updateColumns === false) {
+            return "$mergeSql WHEN NOT MATCHED THEN $insertSql";
+        }
+
+        if ($updateColumns === true) {
+            $updateColumns = [];
+            foreach ($updateNames as $name) {
+                $quotedName = $this->db->quoteColumnName($name);
+                if (strrpos($quotedName, '.') === false) {
+                    $quotedName = '"EXCLUDED".' . $quotedName;
+                }
+                $updateColumns[$name] = new Expression($quotedName);
+            }
+        }
+        list($updates, $params) = $this->prepareUpdateSets($table, $updateColumns, $params);
+        $updateSql = 'UPDATE SET ' . implode(', ', $updates);
+        return "$mergeSql WHEN MATCHED THEN $updateSql WHEN NOT MATCHED THEN $insertSql";
+    }
+
     /**
      * @inheritdoc
      */
@@ -486,6 +553,24 @@ class QueryBuilder extends \yii\db\QueryBuilder
         return 'DROP INDEX ' . $this->db->quoteTableName($name);
     }
     
+    /**
+     * {@inheritdoc}
+     */
+    public function addDefaultValue($name, $table, $column, $value)
+    {
+        return 'ALTER TABLE ' . $this->db->quoteTableName($table) . ' ALTER COLUMN '
+            . $this->db->quoteColumnName($column) . ' SET DEFAULT ' . $this->db->quoteValue($value);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function dropDefaultValue($name, $table)
+    {
+        return 'ALTER TABLE ' . $this->db->quoteTableName($table) . ' ALTER COLUMN '
+            . $this->db->quoteColumnName($name) . ' DROP DEFAULT';
+    }
+
     /**
      * @inheritdoc
      */
