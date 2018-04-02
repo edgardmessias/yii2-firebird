@@ -15,7 +15,7 @@ use yii\db\ConstraintFinderInterface;
 use yii\db\ConstraintFinderTrait;
 use yii\db\Exception;
 use yii\db\Expression;
-use yii\db\ForeignKeyConstraint;
+use yii\db\IndexConstraint;
 use yii\db\Schema as BaseSchema;
 use yii\db\TableSchema;
 use yii\db\Transaction;
@@ -872,17 +872,49 @@ SQL;
         return $result;
     }
 
+    protected function loadTableIndexes($tableName)
+    {
+        static $sql = <<<'SQL'
+SELECT IDX.RDB$INDEX_NAME AS NAME,
+       SEG.RDB$FIELD_NAME AS COLUMN_NAME,
+       IDX.RDB$UNIQUE_FLAG AS INDEX_IS_UNIQUE,
+       CASE WHEN CONST.RDB$CONSTRAINT_NAME IS NOT NULL THEN 1 ELSE 0 END AS INDEX_IS_PRIMARY
+       FROM RDB$INDICES IDX
+  JOIN RDB$INDEX_SEGMENTS SEG
+  LEFT JOIN RDB$RELATION_CONSTRAINTS CONST ON CONST.RDB$INDEX_NAME = SEG.RDB$INDEX_NAME AND CONST.RDB$CONSTRAINT_TYPE = 'PRIMARY KEY'
+    ON SEG.RDB$INDEX_NAME = IDX.RDB$INDEX_NAME
+WHERE UPPER(IDX.RDB$RELATION_NAME) = UPPER(:tableName)
+SQL;
+
+        $resolvedName = $this->resolveTableName($tableName);
+        $indexes = $this->db->createCommand($sql, [
+            ':tableName' => $resolvedName->name,
+        ])->queryAll();
+        $indexes = $this->normalizePdoRowKeyCase($indexes, true);
+        $indexes = ArrayHelper::index($indexes, null, 'name');
+        $result = [];
+        foreach ($indexes as $name => $index) {
+            $columns = ArrayHelper::getColumn($index, 'column_name');
+            $columns = array_map('trim', $columns);
+            $columns = array_map('strtolower', $columns);
+
+            $result[] = new IndexConstraint([
+                'isPrimary' => (bool) $index[0]['index_is_primary'],
+                'isUnique' => (bool) $index[0]['index_is_unique'],
+                'name' => strtolower(trim($name)),
+                'columnNames' => $columns,
+            ]);
+        }
+
+        return $result;
+    }
+
     protected function loadTableDefaultValues($tableName)
     {
         return [];
     }
 
     protected function loadTableForeignKeys($tableName)
-    {
-        return [];
-    }
-
-    protected function loadTableIndexes($tableName)
     {
         return [];
     }
