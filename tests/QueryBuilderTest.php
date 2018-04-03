@@ -413,6 +413,22 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
         
         $this->assertEquals(4, (new Query())->from('autoincrement_table')->max('id', $this->getConnection(false)));
     }
+    
+    /**
+     * @dataProvider insertProvider
+     * @param string $table
+     * @param array $columns
+     * @param array $params
+     * @param string $expectedSQL
+     * @param array $expectedParams
+     */
+    public function testInsert($table, $columns, $params, $expectedSQL, $expectedParams) {
+        $db = $this->getConnection(false);
+        if (is_object($columns) && $columns instanceof \yii\db\Query && version_compare($db->firebird_version, '3.0.0', '<')) {
+            $this->setExpectedException('\yii\base\NotSupportedException', 'Firebird < 3.0.0 has the "Unstable Cursor" problem');
+        }
+        parent::testInsert($table, $columns, $params, $expectedSQL, $expectedParams);
+    }
 
     public function upsertProvider()
     {
@@ -483,6 +499,23 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
             $newData[$testName] = array_replace($newData[$testName], $data);
         }        
         return $newData;
+    }
+    
+    /**
+     * @depends testInitFixtures
+     * @dataProvider upsertProvider
+     * @param string $table
+     * @param array $insertColumns
+     * @param array|null $updateColumns
+     * @param string|string[] $expectedSQL
+     * @param array $expectedParams
+     */
+    public function testUpsert($table, $insertColumns, $updateColumns, $expectedSQL, $expectedParams) {
+        $db = $this->getConnection(false);
+        if (is_object($insertColumns) && $insertColumns instanceof \yii\db\Query && version_compare($db->firebird_version, '3.0.0', '<')) {
+            $this->setExpectedException('\yii\base\NotSupportedException', 'Firebird < 3.0.0 has the "Unstable Cursor" problem');
+        }
+        parent::testUpsert($table, $insertColumns, $updateColumns, $expectedSQL, $expectedParams);
     }
     
     public function batchInsertProvider()
