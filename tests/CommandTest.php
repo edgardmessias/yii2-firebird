@@ -301,4 +301,16 @@ SQL;
 
         parent::testAutoRefreshTableSchema();
     }
+    
+    public function batchInsertSqlProvider() {
+        $data = parent::batchInsertSqlProvider();
+        
+        $data['issue11242']['expected'] = "EXECUTE block AS BEGIN INSERT INTO type (int_col, float_col, char_col) VALUES (NULL, NULL, 'Kyiv {{city}}, Ukraine'); END;";
+        $data['wrongBehavior']['expected'] = "EXECUTE block AS BEGIN INSERT INTO type (type.int_col, float_col, char_col) VALUES ('', NULL, 'Kyiv {{city}}, Ukraine'); END;";
+        
+        // Bingind on block not work
+        unset($data['batchInsert binds params from expression']);
+        
+        return $data;
+    }
 }
