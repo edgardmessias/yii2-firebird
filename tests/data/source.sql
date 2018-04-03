@@ -81,6 +81,12 @@ END;
 -- SQL
 EXECUTE block AS
 BEGIN
+    IF (EXISTS(SELECT 1 FROM rdb$relations WHERE LOWER(rdb$relation_name) = 'animal_view')) THEN 
+        EXECUTE STATEMENT 'DROP VIEW animal_view;';
+END;
+-- SQL
+EXECUTE block AS
+BEGIN
     IF (EXISTS(SELECT 1 FROM rdb$relations WHERE LOWER(rdb$relation_name) = 'animal')) THEN 
         EXECUTE STATEMENT 'DROP TABLE animal;';
 END;
@@ -119,12 +125,6 @@ EXECUTE block AS
 BEGIN
     IF (EXISTS(SELECT 1 FROM rdb$relations WHERE LOWER(rdb$relation_name) = 'department')) THEN 
         EXECUTE STATEMENT 'DROP TABLE department;';
-END;
--- SQL
-EXECUTE block AS
-BEGIN
-    IF (EXISTS(SELECT 1 FROM rdb$relations WHERE LOWER(rdb$relation_name) = 'animal_view')) THEN 
-        EXECUTE STATEMENT 'DROP VIEW animal_view;';
 END;
 -- SQL
 EXECUTE block AS
