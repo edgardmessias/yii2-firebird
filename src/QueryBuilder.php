@@ -65,6 +65,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
         return array_merge(parent::defaultExpressionBuilders(), [
             'yii\db\Expression' => 'edgardmessias\db\firebird\ExpressionBuilder',
             'yii\db\conditions\InCondition' => 'edgardmessias\db\firebird\conditions\InConditionBuilder',
+            'yii\db\conditions\LikeCondition' => 'edgardmessias\db\firebird\conditions\LikeConditionBuilder',
         ]);
     }
 

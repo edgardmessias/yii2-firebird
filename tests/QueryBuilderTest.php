@@ -18,6 +18,8 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
 
 
     protected $driverName = 'firebird';
+    
+    protected $likeEscapeCharSql = " ESCAPE '\\'";
 
     public static function assertSame($expected, $actual, $message = '') {
         // Fix PDO VALUE Compare
