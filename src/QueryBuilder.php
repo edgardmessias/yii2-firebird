@@ -140,6 +140,25 @@ class QueryBuilder extends \yii\db\QueryBuilder
 
         return parent::buildSelect($columns, $params, $distinct, $selectOption);
     }
+    
+    public function buildLimit($limit, $offset)
+    {
+        $sql = '';
+        if ($this->hasLimit($limit)) {
+            if ($limit instanceof \yii\db\ExpressionInterface) {
+                $limit = "($limit)";
+            }
+            $sql = 'FIRST ' . $limit;
+        }
+        if ($this->hasOffset($offset)) {
+            if ($offset instanceof \yii\db\ExpressionInterface) {
+                $offset = "($offset)";
+            }
+            $sql .= ' SKIP ' . $offset;
+        }
+
+        return ltrim($sql);
+    }
 
     /**
      * @inheritdoc
@@ -151,35 +170,12 @@ class QueryBuilder extends \yii\db\QueryBuilder
         if ($orderBy !== '') {
             $sql .= $this->separator . $orderBy;
         }
-
-        $limit = $limit !== null ? intval($limit) : -1;
-        $offset = $offset !== null ? intval($offset) : -1;
-        // If ignoring both params then do nothing
-        if ($offset < 0 && $limit < 0) {
-            return $sql;
+        
+        $limit = $this->buildLimit($limit, $offset);
+        if ($limit !== '') {
+            $sql = preg_replace('/^SELECT /i', 'SELECT ' . $limit . ' ', $sql, 1);
         }
-        // If we are ignoring limit then return full result set starting
-        // from $offset. In Firebird this can only be done with SKIP
-        if ($offset >= 0 && $limit < 0) {
-            $count = 1; //Only do it once
-            $sql = preg_replace('/^SELECT /i', 'SELECT SKIP ' . (int) $offset . ' ', $sql, $count);
-            return $sql;
-        }
-        // If we are ignoring $offset then return $limit rows.
-        // ie, return the first $limit rows in the set.
-        if ($offset < 0 && $limit >= 0) {
-            $count = 1; //Only do it once
-            $sql = preg_replace('/^SELECT /i', 'SELECT FIRST ' . (int) $limit . ' ', $sql, $count);
-            return $sql;
-        }
-        // Otherwise apply the params and return the amended sql.
-        if ($offset >= 0 && $limit >= 0) {
-            $count = 1; //Only do it once
-            $sql = preg_replace('/^SELECT /i', 'SELECT FIRST ' . (int) $limit . ' SKIP ' . (int) $offset . ' ', $sql, $count);
-            return $sql;
-        }
-        // If we have fallen through the cracks then just pass
-        // the sql back.
+        
         return $sql;
     }
 
