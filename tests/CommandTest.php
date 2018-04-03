@@ -329,11 +329,25 @@ SQL;
      */
     public function testUpsert(array $firstData, array $secondData)
     {
-        $db = $this->getConnection(false);
+        $db = $this->getConnection();
         if ($firstData['params'][1] instanceof \yii\db\Query && version_compare($db->firebird_version, '3.0.0', '<')) {
             $this->setExpectedException('\yii\base\NotSupportedException', 'Firebird < 3.0.0 has the "Unstable Cursor" problem');
         }
-        parent::testUpsert($firstData, $secondData);
+        
+        if (version_compare(phpversion('pdo_firebird'), '7.0.13', '<=')) {
+            //Change BLOB to VARCHAR(8191)
+            $db->createCommand()->renameColumn('{{T_upsert}}', 'address', 'address_old')->execute();
+            $db->createCommand()->addColumn('{{T_upsert}}', 'address', 'string(8191)')->execute();
+            $db->createCommand()->update('{{T_upsert}}', ['address'=>new Expression('CAST(address_old AS VARCHAR(8191))')])->execute();
+            $db->createCommand()->dropColumn('{{T_upsert}}', 'address_old')->execute();
+            $db->close();
+            $db->open();
+        }
+        
+        $this->assertEquals(0, $db->createCommand('SELECT COUNT(*) FROM {{T_upsert}}')->queryScalar());
+        $this->performAndCompareUpsertResult($db, $firstData);
+        $this->assertEquals(1, $db->createCommand('SELECT COUNT(*) FROM {{T_upsert}}')->queryScalar());
+        $this->performAndCompareUpsertResult($db, $secondData);
     }
 
 }
