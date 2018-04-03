@@ -14,7 +14,7 @@ class CommandTest extends \yiiunit\framework\db\CommandTest
     use FirebirdTestTrait;
 
     public $driverName = 'firebird';
-
+    
     public function testAutoQuoting()
     {
         $db = $this->getConnection(false);
@@ -313,7 +313,7 @@ SQL;
         
         return $data;
     }
-    
+
     public function testCreateView() {
         $db = $this->getConnection(false);
         if ($db->getSchema()->getTableSchema('testCreateView') !== null) {
@@ -321,4 +321,19 @@ SQL;
         }
         parent::testCreateView();
     }
+
+    /**
+     * @dataProvider upsertProvider
+     * @param array $firstData
+     * @param array $secondData
+     */
+    public function testUpsert(array $firstData, array $secondData)
+    {
+        $db = $this->getConnection(false);
+        if ($firstData['params'][1] instanceof \yii\db\Query && version_compare($db->firebird_version, '3.0.0', '<')) {
+            $this->setExpectedException('\yii\base\NotSupportedException', 'Firebird < 3.0.0 has the "Unstable Cursor" problem');
+        }
+        parent::testUpsert($firstData, $secondData);
+    }
+
 }
