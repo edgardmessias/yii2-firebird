@@ -313,4 +313,12 @@ SQL;
         
         return $data;
     }
+    
+    public function testCreateView() {
+        $db = $this->getConnection(false);
+        if ($db->getSchema()->getTableSchema('testCreateView') !== null) {
+            $db->createCommand()->dropView('testCreateView')->execute();
+        }
+        parent::testCreateView();
+    }
 }
