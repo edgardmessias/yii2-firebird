@@ -107,7 +107,7 @@ before_script:
       PHPUNIT_FLAGS="--coverage-clover=coverage.clover"
     fi
 script:
-  - vendor/bin/phpunit --debug --verbose $PHPUNIT_FLAGS --enforce-time-limit
+  - vendor/bin/phpunit --verbose $PHPUNIT_FLAGS --enforce-time-limit
 
 after_script:
   - |

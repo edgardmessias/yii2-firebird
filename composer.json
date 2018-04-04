@@ -18,10 +18,10 @@
         }
     ],
     "require": {
-        "yiisoft/yii2": "~2.0.15"
+        "yiisoft/yii2": "^2.0.15.0"
     },
     "require-dev": {
-        "yiisoft/yii2-dev": "~2.0.15",
+        "yiisoft/yii2-dev": "~2.0.15.0",
         "yiisoft/yii2-coding-standards": "^2.0.2",
         "phpunit/phpunit": "4.8.34"
     },
@@ -33,16 +33,16 @@
     "config": {
         "platform": {
             "php": "5.4"
+        },
+        "fxp-asset": {
+            "installer-paths": {
+                "npm-asset-library": "vendor/npm",
+                "bower-asset-library": "vendor/bower"
+            },
+            "vcs-driver-options": {
+                "github-no-api": true
+            },
+            "pattern-skip-version": "(-build|-patch)"
         }
-    },
-    "extra": {
-        "asset-installer-paths": {
-            "npm-asset-library": "vendor/npm",
-            "bower-asset-library": "vendor/bower"
-        },
-        "asset-vcs-driver-options": {
-            "github-no-api": true
-        },
-        "asset-pattern-skip-version": "(-build|-patch)"
     }
 }
