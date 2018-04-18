@@ -61,8 +61,10 @@ class Command extends \yii\db\Command
     
     public function getSql() {
         $sql = parent::getSql();
-        // Unquote the {{@table@}} to {{table}} for insert
-        $sql = preg_replace('/(\{\{)@(%?[\w\-\. ]+%?)@(\}\})/', '\1\2\3', $sql);
+        if (is_string($sql)) {
+            // Unquote the {{@table@}} to {{table}} for insert
+            $sql = preg_replace('/(\{\{)@(%?[\w\-\. ]+%?)@(\}\})/', '\1\2\3', $sql);
+        }
         return $sql;
     }
 

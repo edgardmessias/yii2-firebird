@@ -20,6 +20,30 @@ class Connection extends \yii\db\Connection
     public $firebird_version = null;
     
     /**
+     * @see https://www.firebirdsql.org/file/documentation/release_notes/html/en/3_0/rnfb30-ddl-enhance.html#rnfb30-ddl-identity
+     * @var boolean|null
+     */
+    public $supportColumnIdentity = null;
+    
+    /**
+     * @see https://firebirdsql.org/file/documentation/reference_manuals/fblangref25-en/html/fblangref25-dml-insert.html#fblangref25-dml-insert-select-unstable
+     * @var boolean|null
+     */
+    public $supportStableCursor = null;
+    
+    /**
+     * @see https://bugs.php.net/bug.php?id=72931
+     * @var boolean|null
+     */
+    public $supportReturningInsert = null;
+    
+    /**
+     * @see https://bugs.php.net/bug.php?id=61183
+     * @var boolean|null
+     */
+    public $supportBlobDataType = null;
+    
+    /**
      * @inheritdoc
      */
     public $schemaMap = [
@@ -92,6 +116,19 @@ class Connection extends \yii\db\Connection
                 $this->firebird_version = $matches[1];
             }
         } catch (\Exception $ex) {
+        }
+        
+        $supports = [
+            'supportColumnIdentity' => version_compare($this->firebird_version, '3.0.0', '>='),
+            'supportStableCursor' => version_compare($this->firebird_version, '3.0.0', '>='),
+            'supportReturningInsert' => version_compare($this->firebird_version, '3.0.0', '<') || version_compare(phpversion('pdo_firebird'), '7.0.15', '>='),
+            'supportBlobDataType' => version_compare(phpversion('pdo_firebird'), '7.0.13', '>'),
+        ];
+        
+        foreach ($supports as $key => $value) {
+            if ($this->{$key} === null) {
+                $this->{$key} = $value;
+            }
         }
     }
 

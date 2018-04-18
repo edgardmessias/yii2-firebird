@@ -55,7 +55,7 @@ class CommandTest extends \yiiunit\framework\db\CommandTest
     
     public function testBindParamValue()
     {
-        if (version_compare(phpversion('pdo_firebird'), '7.0.13', '<=')) {
+        if (!$this->getConnection(false)->supportBlobDataType) {
             $this->markTestSkipped('BLOB bug for PHP <= 7.0.13, see https://bugs.php.net/bug.php?id=61183');
         }
         
@@ -252,7 +252,7 @@ SQL;
         /**
          * @see https://firebirdsql.org/file/documentation/reference_manuals/fblangref25-en/html/fblangref25-dml-insert.html#fblangref25-dml-insert-select-unstable
          */
-        if (version_compare($db->firebird_version, '3.0.0', '<')) {
+        if (!$db->supportStableCursor) {
             $this->setExpectedException('\yii\base\NotSupportedException', 'Firebird < 3.0.0 has the "Unstable Cursor" problem');
         }
         parent::testInsertSelect();
@@ -265,7 +265,7 @@ SQL;
         /**
          * @see https://firebirdsql.org/file/documentation/reference_manuals/fblangref25-en/html/fblangref25-dml-insert.html#fblangref25-dml-insert-select-unstable
          */
-        if (version_compare($db->firebird_version, '3.0.0', '<')) {
+        if (!$db->supportStableCursor) {
             $this->setExpectedException('\yii\base\NotSupportedException', 'Firebird < 3.0.0 has the "Unstable Cursor" problem');
         }
         parent::testInsertSelectAlias();
@@ -285,7 +285,7 @@ SQL;
         /**
          * @see https://firebirdsql.org/file/documentation/reference_manuals/fblangref25-en/html/fblangref25-dml-insert.html#fblangref25-dml-insert-select-unstable
          */
-        if (version_compare($db->firebird_version, '3.0.0', '<')) {
+        if (!$db->supportStableCursor) {
             $this->setExpectedException('\yii\base\NotSupportedException', 'Firebird < 3.0.0 has the "Unstable Cursor" problem');
         }
         parent::testInsertSelectFailed($invalidSelectColumns);
@@ -330,11 +330,11 @@ SQL;
     public function testUpsert(array $firstData, array $secondData)
     {
         $db = $this->getConnection();
-        if ($firstData['params'][1] instanceof \yii\db\Query && version_compare($db->firebird_version, '3.0.0', '<')) {
+        if ($firstData['params'][1] instanceof \yii\db\Query && !$db->supportStableCursor) {
             $this->setExpectedException('\yii\base\NotSupportedException', 'Firebird < 3.0.0 has the "Unstable Cursor" problem');
         }
         
-        if (version_compare(phpversion('pdo_firebird'), '7.0.13', '<=')) {
+        if (!$this->getConnection(false)->supportBlobDataType) {
             //Change BLOB to VARCHAR(8191)
             $db->createCommand()->renameColumn('{{T_upsert}}', 'address', 'address_old')->execute();
             $db->createCommand()->addColumn('{{T_upsert}}', 'address', 'string(8191)')->execute();

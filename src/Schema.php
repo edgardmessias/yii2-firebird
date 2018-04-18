@@ -383,7 +383,7 @@ class Schema extends BaseSchema implements ConstraintFinderInterface
                     rel.rdb$description AS fcomment,
                     fld.rdb$default_value AS fdefault_value,';
 
-        if (version_compare($this->db->firebird_version, '3.0.0', '>=')) {
+        if ($this->db->supportColumnIdentity) {
             $sql .= '
                     rel.rdb$generator_name AS fgenerator_name,';
         }
@@ -719,7 +719,7 @@ ORDER BY id.RDB$RELATION_NAME, id.RDB$INDEX_NAME, ids.RDB$FIELD_POSITION';
         $sql = "";
         $returnColumns = $this->getTableSchema($table)->primaryKey;
         if (!empty($returnColumns)) {
-            if (version_compare(phpversion('pdo_firebird'), '7.0.15', '<')) {
+            if (!$this->db->supportReturningInsert) {
                 $returs = [];
                 $returning = [];
                 $columnSchemas = $this->getTableSchema($table)->columns;

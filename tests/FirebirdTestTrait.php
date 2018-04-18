@@ -264,6 +264,7 @@ trait FirebirdTestTrait
     {
         $pattern = '/\[\[(' . implode('|', $this->reservedWords) . ')\]\]/i';
         $sql = preg_replace($pattern, '"$1"', $sql);
+        $sql = preg_replace('/(\{\{)(%?[\w\-\. ]+%?)(\}\})/', '\1@\2@\3', $sql);
         
         return str_replace(['[[', ']]'], '', $sql);
     }
