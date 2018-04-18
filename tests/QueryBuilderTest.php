@@ -526,6 +526,7 @@ class QueryBuilderTest extends \yiiunit\framework\db\QueryBuilderTest
             $index = isset($test['expected']) ? 'expected' : 3;
 
             if ($test[$index]) {
+                $test[$index] = str_replace('{{city}}', '{{@city@}}', $test[$index]);                
                 $test[$index] = 'EXECUTE block AS BEGIN ' . $test[$index] . '; END;';
             }
         }
