@@ -14,6 +14,23 @@ class ActiveRecordTest extends \yiiunit\framework\db\ActiveRecordTest
 
     public $driverName = 'firebird';
     
+    public function testAutoId()
+    {
+        $animal = new \yiiunit\data\ar\Animal();
+        $animal->type = 'cat';
+
+        $this->assertTrue($animal->save());
+
+        $this->assertEquals(3, $animal->id);
+
+        $customer = new Customer();
+        $customer->email = 'test@test.net';
+        $this->assertTrue($customer->save());
+        
+        $this->assertEquals(4, $customer->id);
+    }
+    
+    
     public function testCustomColumns()
     {
         // find custom column

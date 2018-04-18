@@ -278,6 +278,49 @@ class QueryBuilder extends \yii\db\QueryBuilder
         }
         return parent::prepareUpdateSets($table, $columns, $params);
     }
+    
+    public function rawInsert($table, $columns, $values, &$params)
+    {
+        $schema = $this->db->getSchema();
+        if (($tableSchema = $schema->getTableSchema($table)) !== null) {
+            $columnSchemas = $tableSchema->columns;
+        } else {
+            $columnSchemas = [];
+        }
+
+        $cs = [];
+        $vs = [];
+        foreach ($values as $i => $value) {
+            if (isset($columns[$i], $columnSchemas[$columns[$i]]) && !is_array($value)) {
+                $value = $columnSchemas[$columns[$i]]->dbTypecast($value);
+            }
+            if (is_string($value)) {
+                // Quote the {{table}} to {{@table@}} for insert
+                $value = preg_replace('/(\{\{)(%?[\w\-\. ]+%?)(\}\})/', '\1@\2@\3', $value);
+                $value = $schema->quoteValue($value);
+            } elseif (is_float($value)) {
+                // ensure type cast always has . as decimal separator in all locales
+                $value = \yii\helpers\StringHelper::floatToString($value);
+            } elseif ($value === false) {
+                $value = 0;
+            } elseif ($value === null) {
+                $value = 'NULL';
+            } elseif ($value instanceof ExpressionInterface) {
+                $value = $this->buildExpression($value, $params);
+            }
+
+            $cs[] = $schema->quoteColumnName($columns[$i]);
+            $vs[] = $value;
+        }
+
+        if (empty($vs)) {
+            return 'INSERT INTO ' . $schema->quoteTableName($table)
+                    . ' DEFAULT VALUES';
+        }
+
+        return 'INSERT INTO ' . $schema->quoteTableName($table)
+                . ' (' . implode(', ', $cs) . ') VALUES (' . implode(', ', $vs) . ')';
+    }
 
     /**
      * @inheritdoc
@@ -297,31 +340,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
 
         $values = [];
         foreach ($rows as $row) {
-            $vs = [];
-            foreach ($row as $i => $value) {
-                if (isset($columns[$i], $columnSchemas[$columns[$i]]) && !is_array($value)) {
-                    $value = $columnSchemas[$columns[$i]]->dbTypecast($value);
-                }
-                if (is_string($value)) {
-                    $value = $schema->quoteValue($value);
-                } elseif (is_float($value)) {
-                    // ensure type cast always has . as decimal separator in all locales
-                    $value = \yii\helpers\StringHelper::floatToString($value);
-                } elseif ($value === false) {
-                    $value = 0;
-                } elseif ($value === null) {
-                    $value = 'NULL';
-                } elseif ($value instanceof ExpressionInterface) {
-                    $value = $this->buildExpression($value, $params);
-                }
-                $vs[] = $value;
-            }
-            $values[] = 'INSERT INTO ' . $schema->quoteTableName($table)
-                    . ' (' . implode(', ', $columns) . ') VALUES (' . implode(', ', $vs) . ');';
-        }
-
-        foreach ($columns as $i => $name) {
-            $columns[$i] = $schema->quoteColumnName($name);
+            $values[] = $this->rawInsert($table, $columns, $row, $params) . ';';
         }
 
         return 'EXECUTE block AS BEGIN ' . implode(' ', $values) . ' END;';

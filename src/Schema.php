@@ -716,14 +716,34 @@ ORDER BY id.RDB$RELATION_NAME, id.RDB$INDEX_NAME, ids.RDB$FIELD_POSITION';
     {
         $this->_lastInsertID = false;
         $params = [];
-        $sql = $this->db->getQueryBuilder()->insert($table, $columns, $params);
+        $sql = "";
         $returnColumns = $this->getTableSchema($table)->primaryKey;
         if (!empty($returnColumns)) {
-            $returning = [];
-            foreach ((array) $returnColumns as $name) {
-                $returning[] = $this->quoteColumnName($name);
+            if (version_compare(phpversion('pdo_firebird'), '7.0.15', '<')) {
+                $returs = [];
+                $returning = [];
+                $columnSchemas = $this->getTableSchema($table)->columns;
+                foreach ((array) $returnColumns as $name) {
+                    $returs[] = $this->quoteColumnName($name) . ' ' . $columnSchemas[$name]->dbType;
+                    $returning[] = $this->quoteColumnName($name);
+                }
+
+                $sql = $this->db->getQueryBuilder()->rawInsert($table, array_keys($columns), array_values($columns), $params);
+
+                $sql = "EXECUTE block RETURNS (" 
+                        . implode(', ',$returs) 
+                        . ") AS BEGIN\n" 
+                        . $sql . ' RETURNING ' . implode(', ', $returning)
+                        . ' INTO ' . implode(', ', $returning)
+                        . ";\nSUSPEND;\nEND;";
+            } else {
+                $sql = $this->db->getQueryBuilder()->insert($table, $columns, $params);
+                $returning = [];
+                foreach ((array) $returnColumns as $name) {
+                    $returning[] = $this->quoteColumnName($name);
+                }
+                $sql .= ' RETURNING ' . implode(', ', $returning);
             }
-            $sql .= ' RETURNING ' . implode(', ', $returning);
         }
 
         $command = $this->db->createCommand($sql, $params);
